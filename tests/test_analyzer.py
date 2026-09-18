@@ -47,7 +47,10 @@ def test_decrypted_credential_export_is_blocked():
                 "name": "Export Credentials",
                 "type": "n8n-nodes-base.executeCommand",
                 "parameters": {
-                    "command": "n8n export:credentials --all --pretty --decrypted --output=/tmp/cred"
+                    "command": (
+                        "n8n export:credentials --all --pretty "
+                        "--decrypted --output=/tmp/cred"
+                    )
                 },
             }
         ]
@@ -118,10 +121,15 @@ def test_hardcoded_secret_is_redacted_in_evidence():
             {
                 "name": "HTTP",
                 "type": "n8n-nodes-base.httpRequest",
-                "parameters": {"apiKey": "super-secret-value-123456", "url": "https://example.com"},
+                "parameters": {
+                    "apiKey": "super-secret-value-123456",
+                    "url": "https://example.com",
+                },
             }
         ]
     )
-    finding = next(item for item in report.findings if item.rule_id == "POSSIBLE_HARDCODED_SECRET")
+    finding = next(
+        item for item in report.findings if item.rule_id == "POSSIBLE_HARDCODED_SECRET"
+    )
     assert finding.evidence != "super-secret-value-123456"
     assert "super-secret-value-123456" not in (finding.evidence or "")
