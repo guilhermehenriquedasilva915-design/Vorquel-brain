@@ -4,6 +4,7 @@ do $$
 declare
   role_exists boolean;
   policy_count integer;
+  postgres_can_set_writer boolean;
 begin
   select exists(
     select 1 from pg_roles where rolname = 'n8n_brain_writer'
@@ -11,6 +12,21 @@ begin
 
   if not role_exists then
     raise exception 'n8n_brain_writer role is missing';
+  end if;
+
+  select exists(
+    select 1
+    from pg_auth_members m
+    join pg_roles granted_role on granted_role.oid = m.roleid
+    join pg_roles member_role on member_role.oid = m.member
+    where granted_role.rolname = 'n8n_brain_writer'
+      and member_role.rolname = 'postgres'
+      and m.set_option
+      and not m.inherit_option
+  ) into postgres_can_set_writer;
+
+  if not postgres_can_set_writer then
+    raise exception 'postgres must have SET TRUE / INHERIT FALSE membership';
   end if;
 
   if not has_schema_privilege(
