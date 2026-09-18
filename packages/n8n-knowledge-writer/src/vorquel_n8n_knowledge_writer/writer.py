@@ -8,6 +8,8 @@ from psycopg.types.json import Jsonb
 
 from .validation import PreparedRecords, prepare_records
 
+_WRITER_ROLE = "n8n_brain_writer"
+
 
 class ImmutableDriftError(RuntimeError):
     """Raised when an immutable version key already exists with different content."""
@@ -244,6 +246,10 @@ def write_prepared_records(
     records: PreparedRecords,
 ) -> WriteResult:
     with connection.transaction(), connection.cursor() as cursor:
+        cursor.execute("set local role n8n_brain_writer")
+        cursor.execute("set local statement_timeout = '5s'")
+        cursor.execute("set local lock_timeout = '2s'")
+
         source_id, source_created = _source(cursor, records.source)
         analysis_id, analysis_created = _analysis(
             cursor,

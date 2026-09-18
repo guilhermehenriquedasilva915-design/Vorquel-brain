@@ -264,10 +264,14 @@ jobs:
           persist-credentials: false
       - name: Bootstrap Supabase-compatible roles
         run: psql -f supabase/tests/bootstrap.sql
-      - name: Apply knowledge store migration
-        run: psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+      - name: Apply knowledge store migrations
+        run: |
+          psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+          psql -f supabase/migrations/20260918_002_n8n_brain_writer_role_v01.sql
       - name: Validate security and invariants
-        run: psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql
+        run: |
+          psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql
+          psql -f supabase/tests/n8n_brain_writer_role_v01.sql
 
 
   n8n-knowledge-writer-quality:
@@ -307,9 +311,14 @@ jobs:
       - name: Bootstrap Supabase-compatible roles
         working-directory: .
         run: psql -f supabase/tests/bootstrap.sql
-      - name: Apply knowledge store migration
+      - name: Apply knowledge store migrations
         working-directory: .
-        run: psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+        run: |
+          psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+          psql -f supabase/migrations/20260918_002_n8n_brain_writer_role_v01.sql
+      - name: Validate writer database role
+        working-directory: .
+        run: psql -f supabase/tests/n8n_brain_writer_role_v01.sql
       - name: Install
         run: python -m pip install -e '.[dev]'
       - name: Ruff
