@@ -14,10 +14,10 @@ from .common import (
     MAX_MANIFEST_ITEMS,
     MAX_WORKFLOW_BYTES,
     ControlledIngestionError,
+    controlled_structure_item,
     read_json_object,
     safe_relative_path,
     sha256_bytes,
-    controlled_structure_item,
     workflow_has_credentials,
 )
 
@@ -159,7 +159,9 @@ def _rebuild_item(
         source_sha256=digest,
     )
     if not controlled_structure_item(item):
-        raise ControlledIngestionError(f"{relative}: compiled item is outside controlled structure policy")
+        raise ControlledIngestionError(
+            f"{relative}: compiled item is outside controlled structure policy"
+        )
 
     if item["workflow"]["node_count"] != manifest_item["node_count"]:
         raise ControlledIngestionError(f"{relative}: node_count drift")
