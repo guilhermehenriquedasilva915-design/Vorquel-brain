@@ -33,7 +33,9 @@ _DYNAMIC_CODE_PATTERNS = {
 
 _SECRET_KEY = re.compile(r"(?i)(api[_ -]?key|token|password|passwd|secret|authorization)")
 _PLACEHOLDER = re.compile(
-    r"(?i)(YOUR[_ -]?[A-Z0-9_]*|<[^>]*(token|secret|password|key)[^>]*>|\{\{\s*\$(credentials|env)\b)"
+    r"(?i)(YOUR[_ -]?[A-Z0-9_]*|"
+    r"<[^>]*(token|secret|password|key)[^>]*>|"
+    r"\{\{\s*\$(credentials|env)\b)"
 )
 
 
@@ -172,8 +174,12 @@ def analyze_node(node: dict[str, Any]) -> list[Finding]:
                 severity = "CRITICAL" if rule_id == "CODE_CHILD_PROCESS" else "HIGH"
                 message = {
                     "CODE_EVAL": "Custom code uses eval().",
-                    "CODE_FUNCTION_CONSTRUCTOR": "Custom code creates executable code dynamically.",
-                    "CODE_CHILD_PROCESS": "Custom code references child process execution primitives.",
+                    "CODE_FUNCTION_CONSTRUCTOR": (
+                        "Custom code creates executable code dynamically."
+                    ),
+                    "CODE_CHILD_PROCESS": (
+                        "Custom code references child process execution primitives."
+                    ),
                     "CODE_FILESYSTEM": "Custom code imports filesystem access.",
                 }[rule_id]
                 findings.append(
