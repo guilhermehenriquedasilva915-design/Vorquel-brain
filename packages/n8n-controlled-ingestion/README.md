@@ -24,13 +24,13 @@ O planner pode **descobrir**, mas não grava no banco. Ele gera um manifest expl
 
 O ingestidor aceita somente os paths do manifest. Sem `--persist`, ele opera em dry-run. Com `--persist`, a conexão vem somente de `N8N_BRAIN_DATABASE_URL`.
 
-## Perfil STRICT_SAFE_V0_1
+## Perfil CONTROLLED_STRUCTURE_V0_1
 
 Um workflow só entra no primeiro lote se, após Analyzer + Compiler:
 
 - `SAFE_FOR_LEARNING`;
-- `REFERENCE_PATTERN`;
-- zero security findings;
+- `REFERENCE_PATTERN` ou `STRUCTURE_REFERENCE_RESTRICTED`;
+- findings ausentes ou exclusivamente `NETWORK_REQUEST` MEDIUM;
 - zero `UNTRUSTED_TEXT`;
 - zero executable metadata;
 - zero credential types;
@@ -74,3 +74,10 @@ Persistir explicitamente:
 N8N_BRAIN_DATABASE_URL=... \
 vorquel-n8n-ingest-manifest ./workflows manifest.json --persist
 ```
+
+
+## Evidência que alterou o perfil inicial
+
+A primeira tentativa exigia zero security findings e apenas `REFERENCE_PATTERN`. No snapshot real pinado, o planner encontrou **0 candidatos**. Esse resultado invalidou a hipótese operacional de que haveria quatro workflows reais úteis sem nenhum finding.
+
+A V0.1 foi então ajustada de forma conservadora: também aceita `STRUCTURE_REFERENCE_RESTRICTED` quando os únicos findings são `NETWORK_REQUEST` de severidade MEDIUM. Isso permite aprender apenas topologia/metadados de chamadas HTTP; não executa a chamada, não persiste credenciais, texto não confiável ou conteúdo executável e não promove o item a implementação autorizada.
