@@ -107,7 +107,7 @@ def test_load_manifest_rejects_path_traversal(tmp_path):
         "source_repo": SOURCE_REPO,
         "source_commit": SOURCE_COMMIT,
         "analyzer_version": ANALYZER_VERSION,
-        "selection_profile": "STRICT_SAFE_V0_1",
+        "selection_profile": "CONTROLLED_STRUCTURE_V0_1",
         "items": [
             {
                 "source_path": "../escape.json",
@@ -131,7 +131,7 @@ def test_load_manifest_rejects_more_than_four_items(tmp_path):
         "source_repo": SOURCE_REPO,
         "source_commit": SOURCE_COMMIT,
         "analyzer_version": ANALYZER_VERSION,
-        "selection_profile": "STRICT_SAFE_V0_1",
+        "selection_profile": "CONTROLLED_STRUCTURE_V0_1",
         "items": [
             {
                 "source_path": f"{index}.json",
@@ -193,3 +193,24 @@ def test_symlink_workflow_in_manifest_fails_closed(tmp_path):
 
     with pytest.raises(ControlledIngestionError, match="symlink"):
         ingest_manifest(tmp_path, manifest, persist=False)
+
+
+def test_planner_accepts_medium_network_structure_without_credentials(tmp_path):
+    workflow = {
+        "name": "HTTP structure",
+        "nodes": [
+            {
+                "name": "HTTP",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "parameters": {},
+            }
+        ],
+        "connections": {},
+    }
+    write_workflow(tmp_path, "http.json", workflow)
+
+    manifest = build(tmp_path, max_items=1)
+
+    assert manifest["items"][0]["risk_decision"] == "SAFE_FOR_LEARNING"
+    assert manifest["items"][0]["knowledge_role"] == "STRUCTURE_REFERENCE_RESTRICTED"
