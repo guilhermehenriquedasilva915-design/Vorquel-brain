@@ -117,4 +117,4 @@ planner (sem banco)
   → Knowledge Writer
 ```
 
-Na V0.1, cada manifest contém no máximo 4 workflows e só admite itens `SAFE_FOR_LEARNING` sem texto não confiável, executable metadata ou credentials. O perfil aceita `REFERENCE_PATTERN` e, quando os únicos findings são `NETWORK_REQUEST` MEDIUM, `STRUCTURE_REFERENCE_RESTRICTED` para topologia/metadados apenas. O objetivo é validar o caminho end-to-end com o menor conjunto possível antes de qualquer expansão do corpus.
+Na V0.1, cada manifest contém no máximo 4 workflows e só admite itens `SAFE_FOR_LEARNING` sem executable metadata ou credentials. `UNTRUSTED_TEXT` pode existir apenas como dado explicitamente marcado/sanitizado pelo Compiler, sem autoridade. O perfil aceita `REFERENCE_PATTERN` e, quando os únicos findings são `NETWORK_REQUEST` MEDIUM, `STRUCTURE_REFERENCE_RESTRICTED` para topologia/metadados apenas. O objetivo é validar o caminho end-to-end com o menor conjunto possível antes de qualquer expansão do corpus.
