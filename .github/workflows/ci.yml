@@ -380,6 +380,10 @@ jobs:
         run: ruff check packages/n8n-controlled-ingestion
       - name: Unit and integration tests
         run: pytest packages/n8n-controlled-ingestion
+      - name: Reset disposable rows after integration tests
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 -c             "truncate table n8n_brain.knowledge_items, n8n_brain.workflow_analyses, n8n_brain.source_snapshots restart identity cascade"
       - name: Fetch pinned untrusted corpus
         shell: bash
         run: |
@@ -492,4 +496,14 @@ jobs:
           print("- second run idempotency: **passed**")
           print("- persisted rows: **4 sources / 4 analyses / 4 knowledge items**")
           print("- external workflow/code/shell/SSH/HTTP execution: **none**")
+          print()
+          print("Selected review metadata:")
+          for item in manifest["items"]:
+              print(
+                  f"- `{item['source_path']}` | "
+                  f"sha256=`{item['sha256']}` | "
+                  f"role=`{item['knowledge_role']}` | "
+                  f"findings=`{item['finding_rules']}` | "
+                  f"untrusted_text_count={item['untrusted_text_count']}"
+              )
           PY
