@@ -97,3 +97,53 @@ def test_same_analyzer_version_with_changed_risk_fails_closed(knowledge_item):
 
         with pytest.raises(ImmutableDriftError):
             write_prepared_records(connection, changed_records)
+
+
+def test_database_writer_role_is_append_only():
+    with connect() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            """
+            select
+              has_schema_privilege('n8n_brain_writer', 'n8n_brain', 'USAGE'),
+              has_table_privilege(
+                'n8n_brain_writer',
+                'n8n_brain.source_snapshots',
+                'SELECT'
+              ),
+              has_table_privilege(
+                'n8n_brain_writer',
+                'n8n_brain.source_snapshots',
+                'INSERT'
+              ),
+              has_table_privilege(
+                'n8n_brain_writer',
+                'n8n_brain.source_snapshots',
+                'UPDATE'
+              ),
+              has_table_privilege(
+                'n8n_brain_writer',
+                'n8n_brain.source_snapshots',
+                'DELETE'
+              ),
+              (
+                select rolbypassrls
+                from pg_roles
+                where rolname = 'n8n_brain_writer'
+              )
+            """
+        )
+        (
+            schema_usage,
+            can_select,
+            can_insert,
+            can_update,
+            can_delete,
+            bypass_rls,
+        ) = cursor.fetchone()
+
+        assert schema_usage is True
+        assert can_select is True
+        assert can_insert is True
+        assert can_update is False
+        assert can_delete is False
+        assert bypass_rls is False
