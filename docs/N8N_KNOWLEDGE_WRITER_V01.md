@@ -58,3 +58,18 @@ It is not accepted as a CLI argument and is never included in normal output or d
 ## Next gate
 
 After unit/integration CI is green, perform a tiny controlled live ingestion and verify database rows contain only compiled/sanitized material.
+
+
+## Database-enforced least privilege
+
+Migration `20260918_002_n8n_brain_writer_role_v01.sql` creates the NOLOGIN role `n8n_brain_writer`.
+
+The role:
+
+- does not bypass RLS;
+- has schema `USAGE` only;
+- has `SELECT` + `INSERT` on the three V0.1 tables;
+- has no `UPDATE`, `DELETE`, or `TRUNCATE` privilege;
+- is covered by explicit RLS policies for SELECT and INSERT only.
+
+Every writer transaction executes `SET LOCAL ROLE n8n_brain_writer` before accessing data. Therefore an admin-capable DSN is reduced to the writer capability set for the duration of the transaction, and a DSN that cannot assume the role fails closed.
