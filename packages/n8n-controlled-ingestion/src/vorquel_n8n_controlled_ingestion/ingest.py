@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any
 
 from psycopg import Connection
-
 from vorquel_n8n_analyzer.analyzer import analyze_file
 from vorquel_n8n_knowledge_compiler.compiler import compile_knowledge_item
 from vorquel_n8n_knowledge_writer.validation import prepare_records
