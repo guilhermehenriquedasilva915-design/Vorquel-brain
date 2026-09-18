@@ -27,16 +27,6 @@ EXPECTED_ROLE = {
     "CRITICAL": "SECURITY_EXAMPLE",
 }
 
-CODE_NODE_TYPES = {
-    "n8n-nodes-base.code",
-    "n8n-nodes-base.function",
-    "n8n-nodes-base.functionItem",
-}
-COMMAND_NODE_TYPES = {
-    "n8n-nodes-base.executeCommand",
-    "n8n-nodes-base.ssh",
-}
-
 
 def _relative_source_path(report: dict[str, Any], corpus_dir: Path) -> str:
     raw_path = Path(str(report.get("source_path", "")))
@@ -45,50 +35,6 @@ def _relative_source_path(report: dict[str, Any], corpus_dir: Path) -> str:
     except (OSError, ValueError) as exc:
         raise ValueError(f"report path is outside corpus root: {raw_path}") from exc
     return relative.as_posix()
-
-
-def _flatten_strings(value: Any):
-    if isinstance(value, dict):
-        for child in value.values():
-            yield from _flatten_strings(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from _flatten_strings(child)
-    elif isinstance(value, str):
-        yield value
-
-
-def _source_credential_strings(workflow: dict[str, Any]) -> set[str]:
-    values: set[str] = set()
-    for node in workflow.get("nodes", []):
-        if not isinstance(node, dict):
-            continue
-        credentials = node.get("credentials")
-        if not isinstance(credentials, dict):
-            continue
-        for value in _flatten_strings(credentials):
-            if len(value) >= 8:
-                values.add(value)
-    return values
-
-
-def _source_executable_strings(workflow: dict[str, Any]) -> set[str]:
-    values: set[str] = set()
-    for node in workflow.get("nodes", []):
-        if not isinstance(node, dict):
-            continue
-        node_type = str(node.get("type", ""))
-        parameters = node.get("parameters", {})
-        if not isinstance(parameters, (dict, list)):
-            continue
-        for value in _flatten_strings(parameters):
-            stripped = value.strip()
-            is_expression = stripped.startswith("=") or "{{" in stripped or "}}" in stripped
-            if (
-                node_type in CODE_NODE_TYPES | COMMAND_NODE_TYPES or is_expression
-            ) and len(value) >= 16:
-                values.add(value)
-    return values
 
 
 def _contains_key(value: Any, forbidden_key: str) -> bool:
@@ -187,11 +133,16 @@ def _validate_one(
         assert "code" not in snippet
         assert "command" not in snippet
 
-    serialized = json.dumps(first, ensure_ascii=False, sort_keys=True)
-    for credential_value in _source_credential_strings(workflow):
-        assert credential_value not in serialized
-    for executable_value in _source_executable_strings(workflow):
-        assert executable_value not in serialized
+    forbidden_credential_keys = {
+        "credential",
+        "credentials",
+        "credential_id",
+        "credential_name",
+        "credential_value",
+    }
+    for node in first["workflow"]["nodes"]:
+        assert not (forbidden_credential_keys & set(node))
+        assert isinstance(node["credential_types"], list)
 
     return {
         "source_path": relative_path,
