@@ -243,19 +243,18 @@ def write_prepared_records(
     connection: Connection[Any],
     records: PreparedRecords,
 ) -> WriteResult:
-    with connection.transaction():
-        with connection.cursor() as cursor:
-            source_id, source_created = _source(cursor, records.source)
-            analysis_id, analysis_created = _analysis(
-                cursor,
-                source_id=source_id,
-                record=records.analysis,
-            )
-            knowledge_id, knowledge_created = _knowledge(
-                cursor,
-                analysis_id=analysis_id,
-                record=records.knowledge,
-            )
+    with connection.transaction(), connection.cursor() as cursor:
+        source_id, source_created = _source(cursor, records.source)
+        analysis_id, analysis_created = _analysis(
+            cursor,
+            source_id=source_id,
+            record=records.analysis,
+        )
+        knowledge_id, knowledge_created = _knowledge(
+            cursor,
+            analysis_id=analysis_id,
+            record=records.knowledge,
+        )
 
     return WriteResult(
         source_id=source_id,
