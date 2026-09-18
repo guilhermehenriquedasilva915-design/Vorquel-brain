@@ -38,6 +38,8 @@ _ALLOWED_ITEM = {
     "risk_decision",
     "knowledge_role",
     "node_count",
+    "untrusted_text_count",
+    "finding_rules",
 }
 
 
@@ -116,6 +118,26 @@ def load_manifest(path: Path) -> dict[str, Any]:
         if isinstance(node_count, bool) or not isinstance(node_count, int) or node_count <= 0:
             raise ControlledIngestionError(f"{label}.node_count: must be > 0")
 
+        text_count = item["untrusted_text_count"]
+        if isinstance(text_count, bool) or not isinstance(text_count, int) or text_count < 0:
+            raise ControlledIngestionError(
+                f"{label}.untrusted_text_count: must be >= 0"
+            )
+
+        finding_rules = item["finding_rules"]
+        if not isinstance(finding_rules, list) or any(
+            not isinstance(rule, str) for rule in finding_rules
+        ):
+            raise ControlledIngestionError(f"{label}.finding_rules: invalid")
+        if finding_rules != sorted(set(finding_rules)):
+            raise ControlledIngestionError(
+                f"{label}.finding_rules: must be sorted and unique"
+            )
+        if not set(finding_rules) <= {"NETWORK_REQUEST"}:
+            raise ControlledIngestionError(
+                f"{label}.finding_rules: unsupported rule"
+            )
+
     return payload
 
 
@@ -169,6 +191,17 @@ def _rebuild_item(
         raise ControlledIngestionError(f"{relative}: risk decision drift")
     if item["admission"]["knowledge_role"] != manifest_item["knowledge_role"]:
         raise ControlledIngestionError(f"{relative}: knowledge role drift")
+    if len(item["untrusted_text"]) != manifest_item["untrusted_text_count"]:
+        raise ControlledIngestionError(f"{relative}: untrusted text count drift")
+    current_rules = sorted(
+        {
+            str(finding.get("rule_id"))
+            for finding in item["security_findings"]
+            if isinstance(finding, dict)
+        }
+    )
+    if current_rules != manifest_item["finding_rules"]:
+        raise ControlledIngestionError(f"{relative}: finding rules drift")
 
     prepare_records(item, analyzer_version=manifest["analyzer_version"])
     return item
@@ -206,6 +239,8 @@ def ingest_manifest(
                     "sha256": manifest_item["sha256"],
                     "risk_decision": manifest_item["risk_decision"],
                     "knowledge_role": manifest_item["knowledge_role"],
+                    "untrusted_text_count": manifest_item["untrusted_text_count"],
+                    "finding_rules": manifest_item["finding_rules"],
                 }
                 for manifest_item, _ in rebuilt
             ],
