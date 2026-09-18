@@ -430,6 +430,34 @@ jobs:
           )
           assert all(item["node_count"] > 0 for item in manifest["items"])
           PY
+      - name: Print safe manifest review metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "vorquel", "manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          for item in manifest["items"]:
+              print(
+                  json.dumps(
+                      {
+                          "source_path": item["source_path"],
+                          "sha256": item["sha256"],
+                          "risk_decision": item["risk_decision"],
+                          "knowledge_role": item["knowledge_role"],
+                          "node_count": item["node_count"],
+                          "untrusted_text_count": item["untrusted_text_count"],
+                          "finding_rules": item["finding_rules"],
+                      },
+                      sort_keys=True,
+                  )
+              )
+          PY
       - name: Dry-run real corpus manifest
         shell: bash
         run: |
