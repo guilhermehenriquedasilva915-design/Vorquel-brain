@@ -1,6 +1,6 @@
 # Vorquel Brain
 
-Repositório privado para os componentes do cérebro operacional da Vorquel.
+Repositório privado para componentes delimitados do cérebro operacional da Vorquel.
 
 ## Princípios
 
@@ -9,6 +9,21 @@ Repositório privado para os componentes do cérebro operacional da Vorquel.
 - Evidência e proveniência devem ser preservadas.
 - Workflows, vídeos, documentos e mensagens entram como fontes; só material testado e promovido pela Vorquel pode virar padrão validado.
 - DEV e sandbox primeiro; produção exige aprovação explícita.
+- Módulos devem permanecer isoláveis para poderem ser extraídos futuramente sem reescrever o sistema.
+
+## Estrutura
+
+```text
+Vorquel-brain/
+├─ packages/
+│  └─ n8n-analyzer/       # pacote independente e extraível
+├─ docs/                   # arquitetura e decisões técnicas
+├─ sources/                # manifests/proveniência de fontes externas
+├─ SECURITY.md             # trust boundary global
+└─ .github/workflows/      # quality gates
+```
+
+O `n8n-analyzer` não depende de outros módulos do Brain. O Brain pode consumir seus relatórios; o analyzer não precisa conhecer o Brain. Essa fronteira permite mover o pacote para um repositório próprio no futuro preservando o histórico Git.
 
 ## Primeiro componente: n8n Workflow Static Analyzer
 
@@ -17,6 +32,7 @@ O MVP analisa workflows n8n em JSON **sem executar o conteúdo**. Ele gera inven
 ### Uso local
 
 ```bash
+cd packages/n8n-analyzer
 python -m pip install -e '.[dev]'
 vorquel-n8n-analyze caminho/para/workflow.json --pretty
 vorquel-n8n-analyze caminho/para/repositorio/workflows --pretty --output reports/corpus.json
@@ -36,11 +52,3 @@ SAFE_FOR_LEARNING -> SANDBOX_TESTED -> VORQUEL_VALIDATED
 ```
 
 `SAFE_FOR_LEARNING` **não** significa “seguro para produção”; significa apenas que o analisador estático MVP não encontrou achados HIGH/CRITICAL.
-
-## Estrutura
-
-- `src/vorquel_n8n_analyzer/`: analisador e CLI
-- `tests/`: testes unitários
-- `docs/N8N_ANALYZER_ARCHITECTURE.md`: arquitetura e limitações
-- `sources/`: manifests de fontes externas
-- `SECURITY.md`: trust boundary e política de promoção
