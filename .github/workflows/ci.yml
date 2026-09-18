@@ -391,6 +391,13 @@ jobs:
           git -C "$corpus" checkout --detach FETCH_HEAD
           test "$(git -C "$corpus" rev-parse HEAD)" = "$JUSTINCACHE_SHA"
           echo "CORPUS_DIR=$corpus" >> "$GITHUB_ENV"
+      - name: Profile controlled-ingestion eligibility
+        shell: bash
+        run: |
+          python packages/n8n-controlled-ingestion/scripts/profile_real_corpus.py \
+            "$CORPUS_DIR/workflows" \
+            --source-repo "JustInCache/n8n-workflows" \
+            --source-commit "$JUSTINCACHE_SHA"
       - name: Plan four controlled-structure workflows from real corpus
         shell: bash
         run: |
