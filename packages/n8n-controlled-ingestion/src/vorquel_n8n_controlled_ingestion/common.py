@@ -75,17 +75,29 @@ def workflow_has_credentials(workflow: dict[str, Any]) -> bool:
     return False
 
 
-def strict_safe_item(item: dict[str, Any]) -> bool:
+def controlled_structure_item(item: dict[str, Any]) -> bool:
     admission = item.get("admission")
     workflow = item.get("workflow")
     if not isinstance(admission, dict) or not isinstance(workflow, dict):
         return False
     if admission.get("risk_decision") != "SAFE_FOR_LEARNING":
         return False
-    if admission.get("knowledge_role") != "REFERENCE_PATTERN":
+    if admission.get("knowledge_role") not in {
+        "REFERENCE_PATTERN",
+        "STRUCTURE_REFERENCE_RESTRICTED",
+    }:
         return False
-    if item.get("security_findings") != []:
+    findings = item.get("security_findings")
+    if not isinstance(findings, list):
         return False
+    allowed_rules = {"NETWORK_REQUEST"}
+    for finding in findings:
+        if not isinstance(finding, dict):
+            return False
+        if finding.get("rule_id") not in allowed_rules:
+            return False
+        if finding.get("severity") != "MEDIUM":
+            return False
     if item.get("untrusted_text") != []:
         return False
     if item.get("executable_snippets_untrusted") != []:
