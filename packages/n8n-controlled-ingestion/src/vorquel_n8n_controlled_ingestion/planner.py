@@ -86,6 +86,14 @@ def build_manifest(
                 "risk_decision": item["admission"]["risk_decision"],
                 "knowledge_role": item["admission"]["knowledge_role"],
                 "node_count": item["workflow"]["node_count"],
+                "untrusted_text_count": len(item["untrusted_text"]),
+                "finding_rules": sorted(
+                    {
+                        str(finding.get("rule_id"))
+                        for finding in item["security_findings"]
+                        if isinstance(finding, dict)
+                    }
+                ),
             }
         )
 
