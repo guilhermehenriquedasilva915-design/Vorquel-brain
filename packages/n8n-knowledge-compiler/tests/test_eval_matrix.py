@@ -4,7 +4,6 @@ import pytest
 
 from vorquel_n8n_knowledge_compiler.compiler import compile_knowledge_item
 
-
 CASES = [
     ("INFO", "SAFE_FOR_LEARNING", "REFERENCE_PATTERN"),
     ("LOW", "SAFE_FOR_LEARNING", "REFERENCE_PATTERN"),
