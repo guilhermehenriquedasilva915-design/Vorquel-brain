@@ -222,9 +222,11 @@ def analyze_workflow_level(workflow: dict[str, Any]) -> list[Finding]:
 
     privileged = bool(node_types & (DANGEROUS_COMMAND_TYPES | SSH_TYPES))
     ai_like = any(
-        "agent" in str(node.get("type", "")).lower()
-        or "agent" in str(node.get("name", "")).lower()
-        or "lmchat" in str(node.get("type", "")).lower()
+        (
+            "agent" in str(node.get("type", "")).lower()
+            or "lmchat" in str(node.get("type", "")).lower()
+        )
+        and str(node.get("type", "")) != "n8n-nodes-base.noOp"
         for node in nodes
     )
     if privileged and ai_like:
