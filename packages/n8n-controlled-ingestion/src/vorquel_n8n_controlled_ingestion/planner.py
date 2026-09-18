@@ -13,7 +13,7 @@ from .common import (
     read_json_object,
     safe_relative_path,
     sha256_bytes,
-    strict_safe_item,
+    controlled_structure_item,
     workflow_has_credentials,
 )
 
@@ -54,9 +54,6 @@ def build_manifest(
             continue
         if report.risk_decision != "SAFE_FOR_LEARNING":
             continue
-        if report.findings:
-            continue
-
         raw, workflow = read_json_object(
             path,
             max_bytes=MAX_WORKFLOW_BYTES,
@@ -79,7 +76,7 @@ def build_manifest(
             source_path=relative,
             source_sha256=digest,
         )
-        if not strict_safe_item(item):
+        if not controlled_structure_item(item):
             continue
 
         selected.append(
@@ -94,7 +91,7 @@ def build_manifest(
 
     if len(selected) != max_items:
         raise ControlledIngestionError(
-            f"strict-safe planner found {len(selected)} item(s); expected {max_items}"
+            f"controlled-structure planner found {len(selected)} item(s); expected {max_items}"
         )
 
     return {
@@ -102,6 +99,6 @@ def build_manifest(
         "source_repo": source_repo,
         "source_commit": source_commit,
         "analyzer_version": analyzer_version,
-        "selection_profile": "STRICT_SAFE_V0_1",
+        "selection_profile": "CONTROLLED_STRUCTURE_V0_1",
         "items": selected,
     }
