@@ -4,11 +4,9 @@ import json
 from pathlib import Path
 
 import pytest
-
 from vorquel_n8n_controlled_ingestion.common import ControlledIngestionError
 from vorquel_n8n_controlled_ingestion.ingest import ingest_manifest, load_manifest
 from vorquel_n8n_controlled_ingestion.planner import build_manifest
-
 
 SOURCE_REPO = "example/n8n-workflows"
 SOURCE_COMMIT = "a" * 40
