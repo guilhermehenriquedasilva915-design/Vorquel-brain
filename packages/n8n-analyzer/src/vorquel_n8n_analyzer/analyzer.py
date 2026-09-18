@@ -61,6 +61,32 @@ def analyze_file(
     path: str | Path, *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
 ) -> WorkflowReport:
     file_path = Path(path)
+    if file_path.is_symlink():
+        return WorkflowReport(
+            source_path=str(file_path),
+            sha256="",
+            workflow_name=None,
+            parse_error="Symlink input is not allowed for untrusted workflow analysis.",
+        ).finalize()
+
+    try:
+        size = file_path.stat().st_size
+    except OSError as exc:
+        return WorkflowReport(
+            source_path=str(file_path),
+            sha256="",
+            workflow_name=None,
+            parse_error=f"Unable to stat file: {exc.__class__.__name__}",
+        ).finalize()
+
+    if size > max_file_bytes:
+        return WorkflowReport(
+            source_path=str(file_path),
+            sha256="",
+            workflow_name=None,
+            parse_error=f"File exceeds configured size limit ({max_file_bytes} bytes).",
+        ).finalize()
+
     try:
         raw = file_path.read_bytes()
     except OSError as exc:
@@ -72,13 +98,6 @@ def analyze_file(
         ).finalize()
 
     digest = hashlib.sha256(raw).hexdigest()
-    if len(raw) > max_file_bytes:
-        return WorkflowReport(
-            source_path=str(file_path),
-            sha256=digest,
-            workflow_name=None,
-            parse_error=f"File exceeds configured size limit ({max_file_bytes} bytes).",
-        ).finalize()
 
     try:
         workflow = json.loads(raw)
