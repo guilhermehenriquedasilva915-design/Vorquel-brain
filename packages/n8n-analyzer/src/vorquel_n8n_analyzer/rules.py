@@ -112,7 +112,7 @@ def analyze_node(node: dict[str, Any]) -> list[Finding]:
                         "Workflow exports n8n credentials in decrypted form.",
                         node,
                         path=path,
-                        evidence=value,
+                        evidence="matched export:credentials with --decrypted",
                     )
                 )
 
@@ -189,7 +189,7 @@ def analyze_node(node: dict[str, Any]) -> list[Finding]:
                         message,
                         node,
                         path=path,
-                        evidence=value,
+                        evidence=f"matched rule {rule_id}",
                     )
                 )
 
