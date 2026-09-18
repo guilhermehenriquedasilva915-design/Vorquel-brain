@@ -10,10 +10,37 @@ Repositório privado para os componentes do cérebro operacional da Vorquel.
 - Workflows, vídeos, documentos e mensagens entram como fontes; só material testado e promovido pela Vorquel pode virar padrão validado.
 - DEV e sandbox primeiro; produção exige aprovação explícita.
 
-## Módulos iniciais
+## Primeiro componente: n8n Workflow Static Analyzer
 
-- `n8n-analyzer`: análise estática de workflows n8n sem execução.
-- `n8n-brain`: catálogo/knowledge layer posterior.
-- `content-brain`: ingestão e proveniência posterior.
+O MVP analisa workflows n8n em JSON **sem executar o conteúdo**. Ele gera inventário de nodes/triggers e findings de risco para impedir que um corpus externo seja tratado como biblioteca confiável por padrão.
 
-> Estado atual: arquitetura + primeiro MVP do analisador estático.
+### Uso local
+
+```bash
+python -m pip install -e '.[dev]'
+vorquel-n8n-analyze caminho/para/workflow.json --pretty
+vorquel-n8n-analyze caminho/para/repositorio/workflows --pretty --output reports/corpus.json
+```
+
+### Estados
+
+```text
+RAW_UNTRUSTED
+      -> STATIC_ANALYZED
+          -> SAFE_FOR_LEARNING
+          -> REVIEW_REQUIRED
+          -> BLOCKED
+
+Futuro:
+SAFE_FOR_LEARNING -> SANDBOX_TESTED -> VORQUEL_VALIDATED
+```
+
+`SAFE_FOR_LEARNING` **não** significa “seguro para produção”; significa apenas que o analisador estático MVP não encontrou achados HIGH/CRITICAL.
+
+## Estrutura
+
+- `src/vorquel_n8n_analyzer/`: analisador e CLI
+- `tests/`: testes unitários
+- `docs/N8N_ANALYZER_ARCHITECTURE.md`: arquitetura e limitações
+- `sources/`: manifests de fontes externas
+- `SECURITY.md`: trust boundary e política de promoção
