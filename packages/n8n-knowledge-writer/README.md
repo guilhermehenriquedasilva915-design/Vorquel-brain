@@ -35,3 +35,16 @@ vorquel-n8n-write knowledge-item.json --analyzer-version 0.1
 The CLI never prints the database URL.
 
 Use a minimally privileged backend database role in deployed environments. The application code itself issues no UPDATE or DELETE statements.
+
+
+## Database privilege drop
+
+Every write transaction begins with:
+
+```sql
+SET LOCAL ROLE n8n_brain_writer;
+```
+
+The database role is `NOLOGIN`, does not bypass RLS, and has only `USAGE` on the private schema plus `SELECT` and `INSERT` on the V0.1 tables.
+
+The DSN role must therefore be allowed to assume `n8n_brain_writer`. If it cannot, the write fails closed before any source row is inserted.
