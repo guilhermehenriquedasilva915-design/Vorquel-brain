@@ -1,7 +1,5 @@
 \set ON_ERROR_STOP on
 
-create extension if not exists pgtap;
-
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then
