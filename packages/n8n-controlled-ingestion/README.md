@@ -31,7 +31,7 @@ Um workflow só entra no primeiro lote se, após Analyzer + Compiler:
 - `SAFE_FOR_LEARNING`;
 - `REFERENCE_PATTERN` ou `STRUCTURE_REFERENCE_RESTRICTED`;
 - findings ausentes ou exclusivamente `NETWORK_REQUEST` MEDIUM;
-- zero `UNTRUSTED_TEXT`;
+- `UNTRUSTED_TEXT` pode existir somente no formato já delimitado/sanitizado pelo Knowledge Compiler; nunca recebe autoridade;
 - zero executable metadata;
 - zero credential types;
 - `node_count > 0`;
@@ -80,4 +80,4 @@ vorquel-n8n-ingest-manifest ./workflows manifest.json --persist
 
 A primeira tentativa exigia zero security findings e apenas `REFERENCE_PATTERN`. No snapshot real pinado, o planner encontrou **0 candidatos**. Esse resultado invalidou a hipótese operacional de que haveria quatro workflows reais úteis sem nenhum finding.
 
-A V0.1 foi então ajustada de forma conservadora: também aceita `STRUCTURE_REFERENCE_RESTRICTED` quando os únicos findings são `NETWORK_REQUEST` de severidade MEDIUM. Isso permite aprender apenas topologia/metadados de chamadas HTTP; não executa a chamada, não persiste credenciais, texto não confiável ou conteúdo executável e não promove o item a implementação autorizada.
+A V0.1 foi então ajustada de forma conservadora: também aceita `STRUCTURE_REFERENCE_RESTRICTED` quando os únicos findings são `NETWORK_REQUEST` de severidade MEDIUM. Um segundo gate real mostrou que todos os 302 workflows `SAFE_FOR_LEARNING` sem credenciais continham texto não confiável e/ou metadata executável; por isso, o perfil mantém bloqueio total de executable metadata, mas permite `UNTRUSTED_TEXT` já explicitamente marcado, limitado e sanitizado pelo Compiler. Não há RAG nesta fase, então esse texto permanece dado não confiável armazenado, nunca instrução.
