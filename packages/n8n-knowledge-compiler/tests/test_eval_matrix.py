@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from vorquel_n8n_knowledge_compiler.compiler import compile_knowledge_item
 
 
