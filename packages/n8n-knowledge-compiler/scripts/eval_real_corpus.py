@@ -84,9 +84,10 @@ def _source_executable_strings(workflow: dict[str, Any]) -> set[str]:
         for value in _flatten_strings(parameters):
             stripped = value.strip()
             is_expression = stripped.startswith("=") or "{{" in stripped or "}}" in stripped
-            if node_type in CODE_NODE_TYPES | COMMAND_NODE_TYPES or is_expression:
-                if len(value) >= 16:
-                    values.add(value)
+            if (
+                node_type in CODE_NODE_TYPES | COMMAND_NODE_TYPES or is_expression
+            ) and len(value) >= 16:
+                values.add(value)
     return values
 
 
