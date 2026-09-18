@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+
 import psycopg
 import pytest
+
 from vorquel_n8n_controlled_ingestion.ingest import ingest_manifest
 from vorquel_n8n_controlled_ingestion.planner import build_manifest
 
