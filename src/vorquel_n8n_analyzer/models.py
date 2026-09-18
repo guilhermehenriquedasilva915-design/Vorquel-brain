@@ -34,7 +34,7 @@ class WorkflowReport:
     findings: list[Finding] = field(default_factory=list)
     parse_error: str | None = None
 
-    def finalize(self) -> "WorkflowReport":
+    def finalize(self) -> WorkflowReport:
         if self.parse_error:
             self.max_severity = "CRITICAL"
             self.risk_decision = "BLOCKED"
