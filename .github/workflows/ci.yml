@@ -235,3 +235,36 @@ jobs:
         shell: bash
         run: |
           cat "$RUNNER_TEMP/vorquel/eval-summary.json" >> "$GITHUB_STEP_SUMMARY"
+
+
+  n8n-knowledge-store-migration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Bootstrap Supabase-compatible roles
+        run: psql -f supabase/tests/bootstrap.sql
+      - name: Apply knowledge store migration
+        run: psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+      - name: Validate security and invariants
+        run: psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql
