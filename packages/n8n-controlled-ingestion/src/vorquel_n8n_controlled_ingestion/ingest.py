@@ -17,7 +17,7 @@ from .common import (
     read_json_object,
     safe_relative_path,
     sha256_bytes,
-    strict_safe_item,
+    controlled_structure_item,
     workflow_has_credentials,
 )
 
@@ -64,7 +64,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
 
     if payload["manifest_version"] != "0.1":
         raise ControlledIngestionError("manifest: unsupported version")
-    if payload["selection_profile"] != "STRICT_SAFE_V0_1":
+    if payload["selection_profile"] != "CONTROLLED_STRUCTURE_V0_1":
         raise ControlledIngestionError("manifest: unsupported selection profile")
 
     source_repo = payload["source_repo"]
@@ -105,8 +105,13 @@ def load_manifest(path: Path) -> dict[str, Any]:
             raise ControlledIngestionError(f"{label}.sha256: invalid")
         if item["risk_decision"] != "SAFE_FOR_LEARNING":
             raise ControlledIngestionError(f"{label}.risk_decision: must be SAFE_FOR_LEARNING")
-        if item["knowledge_role"] != "REFERENCE_PATTERN":
-            raise ControlledIngestionError(f"{label}.knowledge_role: must be REFERENCE_PATTERN")
+        if item["knowledge_role"] not in {
+            "REFERENCE_PATTERN",
+            "STRUCTURE_REFERENCE_RESTRICTED",
+        }:
+            raise ControlledIngestionError(
+                f"{label}.knowledge_role: unsupported for controlled ingestion"
+            )
         node_count = item["node_count"]
         if isinstance(node_count, bool) or not isinstance(node_count, int) or node_count <= 0:
             raise ControlledIngestionError(f"{label}.node_count: must be > 0")
@@ -128,8 +133,10 @@ def _rebuild_item(
     report = analyze_file(path, max_file_bytes=MAX_WORKFLOW_BYTES)
     if report.parse_error is not None:
         raise ControlledIngestionError(f"{relative}: analyzer parse error")
-    if report.risk_decision != "SAFE_FOR_LEARNING" or report.findings:
-        raise ControlledIngestionError(f"{relative}: no longer satisfies strict-safe analysis")
+    if report.risk_decision != "SAFE_FOR_LEARNING":
+        raise ControlledIngestionError(
+            f"{relative}: no longer satisfies controlled analysis"
+        )
 
     raw, workflow = read_json_object(
         path,
@@ -151,8 +158,8 @@ def _rebuild_item(
         source_path=relative,
         source_sha256=digest,
     )
-    if not strict_safe_item(item):
-        raise ControlledIngestionError(f"{relative}: compiled item is not strict-safe")
+    if not controlled_structure_item(item):
+        raise ControlledIngestionError(f"{relative}: compiled item is outside controlled structure policy")
 
     if item["workflow"]["node_count"] != manifest_item["node_count"]:
         raise ControlledIngestionError(f"{relative}: node_count drift")
