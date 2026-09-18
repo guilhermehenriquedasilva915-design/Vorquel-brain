@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from collections import Counter
 from typing import Any
 
 from .redaction import path_is_sensitive, redact_text
 
 _SCHEMA_VERSION = "0.1"
+_SAFE_METADATA_TOKEN = re.compile(r"^[A-Za-z0-9_.:/@-]{1,128}$")
+_MAX_UNTRUSTED_LABEL = 256
 
 _CODE_NODE_TYPES = {
     "n8n-nodes-base.code",
@@ -63,22 +66,43 @@ def _trigger_type(node_type: str) -> bool:
     )
 
 
+def _bounded_untrusted_label(value: Any) -> str:
+    text = str(value)
+    if len(text) <= _MAX_UNTRUSTED_LABEL:
+        return text
+    return text[: _MAX_UNTRUSTED_LABEL - 1] + "…"
+
+
+def _safe_metadata_scalar(value: Any) -> str | int | float | bool | None:
+    if value is None or isinstance(value, (int, float, bool)):
+        return value
+    if isinstance(value, str) and _SAFE_METADATA_TOKEN.fullmatch(value):
+        return value
+    return None
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return default
+
+
 def _node_record(node: dict[str, Any]) -> dict[str, Any]:
     parameters = node.get("parameters", {})
-    node_type = str(node.get("type", "<missing>"))
+    node_type = _bounded_untrusted_label(node.get("type", "<missing>"))
     record: dict[str, Any] = {
-        "name": str(node.get("name", "")),
+        "name_untrusted": _bounded_untrusted_label(node.get("name", "")),
         "type": node_type,
-        "type_version": node.get("typeVersion"),
+        "type_version": _safe_metadata_scalar(node.get("typeVersion")),
     }
 
     if isinstance(parameters, dict):
-        resource = parameters.get("resource")
-        operation = parameters.get("operation")
-        if isinstance(resource, (str, int, float, bool)) or resource is None:
-            record["resource"] = resource
-        if isinstance(operation, (str, int, float, bool)) or operation is None:
-            record["operation"] = operation
+        record["resource"] = _safe_metadata_scalar(parameters.get("resource"))
+        record["operation"] = _safe_metadata_scalar(parameters.get("operation"))
 
     credentials = node.get("credentials")
     if isinstance(credentials, dict):
@@ -112,18 +136,18 @@ def _extract_edges(workflow: dict[str, Any]) -> list[dict[str, Any]]:
                         continue
                     edges.append(
                         {
-                            "source": str(source_name),
-                            "target": target_name,
-                            "channel": str(channel),
+                            "source_name_untrusted": _bounded_untrusted_label(source_name),
+                            "target_name_untrusted": _bounded_untrusted_label(target_name),
+                            "channel": _bounded_untrusted_label(channel),
                             "source_output_index": output_index,
-                            "target_input_index": int(target.get("index", 0) or 0),
+                            "target_input_index": _safe_int(target.get("index", 0)),
                         }
                     )
     return sorted(
         edges,
         key=lambda edge: (
-            edge["source"],
-            edge["target"],
+            edge["source_name_untrusted"],
+            edge["target_name_untrusted"],
             edge["channel"],
             edge["source_output_index"],
             edge["target_input_index"],
@@ -138,8 +162,8 @@ def _extract_untrusted_material(
     executable: list[dict[str, Any]] = []
 
     for node in nodes:
-        node_name = str(node.get("name", ""))
-        node_type = str(node.get("type", ""))
+        node_name = _bounded_untrusted_label(node.get("name", ""))
+        node_type = _bounded_untrusted_label(node.get("type", ""))
         parameters = node.get("parameters", {})
         if not isinstance(parameters, (dict, list)):
             continue
@@ -281,7 +305,7 @@ def compile_knowledge_item(
 
     node_records = sorted(
         (_node_record(node) for node in nodes),
-        key=lambda node: (node["type"], node["name"]),
+        key=lambda node: (node["type"], node["name_untrusted"]),
     )
     type_counts = Counter(node["type"] for node in node_records)
     trigger_types = sorted(
@@ -293,6 +317,7 @@ def compile_knowledge_item(
     return {
         "schema_version": _SCHEMA_VERSION,
         "kind": "N8N_KNOWLEDGE_ITEM",
+        "source_content_trust": "UNTRUSTED_SOURCE_DATA",
         "provenance": {
             "source_repo": source_repo,
             "source_commit": source_commit,
@@ -300,7 +325,7 @@ def compile_knowledge_item(
             "sha256": source_sha256,
         },
         "workflow": {
-            "name": str(workflow.get("name", "")),
+            "name_untrusted": _bounded_untrusted_label(workflow.get("name", "")),
             "node_count": len(node_records),
             "node_types": dict(sorted(type_counts.items())),
             "trigger_types": trigger_types,
