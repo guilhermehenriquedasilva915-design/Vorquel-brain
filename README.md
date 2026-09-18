@@ -18,7 +18,8 @@ Vorquel-brain/
 ├─ packages/
 │  ├─ n8n-analyzer/              # triagem estática
 │  ├─ n8n-knowledge-compiler/    # compila estrutura segura para conhecimento
-│  └─ n8n-knowledge-writer/      # valida e persiste de forma append-only
+│  ├─ n8n-knowledge-writer/      # valida e persiste de forma append-only
+│  └─ n8n-controlled-ingestion/  # manifest-gated real-corpus ingestion
 ├─ docs/                   # arquitetura e decisões técnicas
 ├─ sources/                # manifests/proveniência de fontes externas
 ├─ SECURITY.md             # trust boundary global
@@ -100,3 +101,20 @@ knowledge_items
 ```
 
 Não existe caminho de UPDATE/DELETE no writer. Conflitos idempotentes iguais são aceitos; drift sob a mesma versão falha fechado.
+
+
+## Quinto componente: n8n Controlled Ingestion
+
+A primeira ingestão real não aceita diretório inteiro nem descoberta automática com escrita direta.
+
+O fluxo é separado em duas fases:
+
+```text
+planner (sem banco)
+  → manifest explícito CONTROLLED_STRUCTURE_V0_1
+  → dry-run
+  → --persist explícito
+  → Knowledge Writer
+```
+
+Na V0.1, cada manifest contém no máximo 4 workflows e só admite itens `SAFE_FOR_LEARNING` sem executable metadata ou credentials. `UNTRUSTED_TEXT` pode existir apenas como dado explicitamente marcado/sanitizado pelo Compiler, sem autoridade. O perfil aceita `REFERENCE_PATTERN` e, quando os únicos findings são `NETWORK_REQUEST` MEDIUM, `STRUCTURE_REFERENCE_RESTRICTED` para topologia/metadados apenas. O objetivo é validar o caminho end-to-end com o menor conjunto possível antes de qualquer expansão do corpus.
