@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vorquel_n8n_analyzer.analyzer import analyze_workflow
+from vorquel_n8n_analyzer.analyzer import analyze_file, analyze_workflow
 
 
 def report_for(nodes):
@@ -152,3 +152,23 @@ def test_noop_named_ai_agent_does_not_escalate_to_critical():
     )
     assert "AI_WITH_PRIVILEGED_EXECUTION" not in rules(report)
     assert report.risk_decision == "REVIEW_REQUIRED"
+
+
+def test_symlink_input_is_blocked(tmp_path):
+    target = tmp_path / "target.json"
+    target.write_text('{"name":"x","nodes":[]}', encoding="utf-8")
+    link = tmp_path / "link.json"
+    link.symlink_to(target)
+
+    report = analyze_file(link)
+    assert report.risk_decision == "BLOCKED"
+    assert "Symlink input is not allowed" in (report.parse_error or "")
+
+
+def test_size_limit_is_checked_before_json_parse(tmp_path):
+    workflow = tmp_path / "large.json"
+    workflow.write_bytes(b"x" * 64)
+
+    report = analyze_file(workflow, max_file_bytes=16)
+    assert report.risk_decision == "BLOCKED"
+    assert "exceeds configured size limit" in (report.parse_error or "")
