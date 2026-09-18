@@ -98,8 +98,6 @@ def controlled_structure_item(item: dict[str, Any]) -> bool:
             return False
         if finding.get("severity") != "MEDIUM":
             return False
-    if item.get("untrusted_text") != []:
-        return False
     if item.get("executable_snippets_untrusted") != []:
         return False
     if not isinstance(workflow.get("node_count"), int) or workflow["node_count"] <= 0:
