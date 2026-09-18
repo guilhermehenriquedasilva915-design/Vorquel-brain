@@ -329,3 +329,157 @@ jobs:
         run: ruff check .
       - name: Tests
         run: pytest
+
+
+  n8n-controlled-ingestion-quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      N8N_BRAIN_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      JUSTINCACHE_REPO: https://github.com/JustInCache/n8n-workflows.git
+      JUSTINCACHE_SHA: 5a7864987c22930521382b597873b713cc830dac
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Bootstrap Supabase-compatible roles
+        run: psql -f supabase/tests/bootstrap.sql
+      - name: Apply n8n Brain migrations
+        run: |
+          psql -f supabase/migrations/20260918_001_n8n_brain_knowledge_store_v01.sql
+          psql -f supabase/migrations/20260918_002_n8n_brain_writer_role_v01.sql
+          psql -f supabase/tests/simulate_supabase_createrole_membership.sql
+          psql -f supabase/migrations/20260918_003_n8n_brain_writer_postgres_membership_v01.sql
+      - name: Install local n8n Brain packages
+        run: |
+          python -m pip install -e packages/n8n-analyzer
+          python -m pip install -e packages/n8n-knowledge-compiler
+          python -m pip install -e packages/n8n-knowledge-writer
+          python -m pip install -e 'packages/n8n-controlled-ingestion[dev]'
+      - name: Ruff
+        run: ruff check packages/n8n-controlled-ingestion
+      - name: Unit and integration tests
+        run: pytest packages/n8n-controlled-ingestion
+      - name: Fetch pinned untrusted corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          corpus="$RUNNER_TEMP/justincache-n8n-workflows"
+          git init "$corpus"
+          git -C "$corpus" remote add origin "$JUSTINCACHE_REPO"
+          git -C "$corpus" -c protocol.version=2 fetch             --depth=1 --no-tags --no-recurse-submodules origin "$JUSTINCACHE_SHA"
+          git -C "$corpus" checkout --detach FETCH_HEAD
+          test "$(git -C "$corpus" rev-parse HEAD)" = "$JUSTINCACHE_SHA"
+          echo "CORPUS_DIR=$corpus" >> "$GITHUB_ENV"
+      - name: Plan four strict-safe workflows from real corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/vorquel"
+          vorquel-n8n-plan-ingestion "$CORPUS_DIR/workflows"             --source-repo "JustInCache/n8n-workflows"             --source-commit "$JUSTINCACHE_SHA"             --analyzer-version "0.1.0"             --max-items 4             --output "$RUNNER_TEMP/vorquel/manifest.json"             > "$RUNNER_TEMP/vorquel/plan-summary.json"
+      - name: Assert manifest is strict and exactly four
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "vorquel", "manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          assert manifest["selection_profile"] == "STRICT_SAFE_V0_1"
+          assert len(manifest["items"]) == 4
+          assert len({item["source_path"] for item in manifest["items"]}) == 4
+          assert all(item["risk_decision"] == "SAFE_FOR_LEARNING" for item in manifest["items"])
+          assert all(item["knowledge_role"] == "REFERENCE_PATTERN" for item in manifest["items"])
+          assert all(item["node_count"] > 0 for item in manifest["items"])
+          PY
+      - name: Dry-run real corpus manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          vorquel-n8n-ingest-manifest             "$CORPUS_DIR/workflows"             "$RUNNER_TEMP/vorquel/manifest.json"             > "$RUNNER_TEMP/vorquel/dry-run.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "vorquel", "dry-run.json")
+              .read_text(encoding="utf-8")
+          )
+          assert result["status"] == "VALIDATED"
+          assert result["dry_run"] is True
+          assert result["item_count"] == 4
+          PY
+      - name: Persist manifest to disposable PostgreSQL
+        shell: bash
+        env:
+          N8N_BRAIN_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: |
+          set -euo pipefail
+          vorquel-n8n-ingest-manifest             "$CORPUS_DIR/workflows"             "$RUNNER_TEMP/vorquel/manifest.json"             --persist             > "$RUNNER_TEMP/vorquel/persist-1.json"
+          vorquel-n8n-ingest-manifest             "$CORPUS_DIR/workflows"             "$RUNNER_TEMP/vorquel/manifest.json"             --persist             > "$RUNNER_TEMP/vorquel/persist-2.json"
+      - name: Assert idempotency and no extra persistence
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"], "vorquel")
+          first = json.loads((root / "persist-1.json").read_text(encoding="utf-8"))
+          second = json.loads((root / "persist-2.json").read_text(encoding="utf-8"))
+          assert first["item_count"] == second["item_count"] == 4
+          assert all(item["created"]["knowledge"] for item in first["items"])
+          assert all(not item["created"]["knowledge"] for item in second["items"])
+          PY
+          test "$(psql -Atqc 'select count(*) from n8n_brain.source_snapshots')" = "4"
+          test "$(psql -Atqc 'select count(*) from n8n_brain.workflow_analyses')" = "4"
+          test "$(psql -Atqc 'select count(*) from n8n_brain.knowledge_items')" = "4"
+      - name: Publish safe ingestion summary
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(os.environ["RUNNER_TEMP"], "vorquel", "manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          print("## Controlled n8n real-corpus ingestion gate")
+          print()
+          print(f"Pinned SHA: `{manifest['source_commit']}`")
+          print()
+          print("- strict-safe manifest items: **4**")
+          print("- dry-run before persistence: **passed**")
+          print("- disposable PostgreSQL persistence: **passed**")
+          print("- second run idempotency: **passed**")
+          print("- persisted rows: **4 sources / 4 analyses / 4 knowledge items**")
+          print("- external workflow/code/shell/SSH/HTTP execution: **none**")
+          PY
