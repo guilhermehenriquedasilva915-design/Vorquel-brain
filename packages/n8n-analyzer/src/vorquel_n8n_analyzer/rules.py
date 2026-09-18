@@ -154,7 +154,7 @@ def analyze_node(node: dict[str, Any]) -> list[Finding]:
                         "HTTP Request targets a local/private/link-local address.",
                         node,
                         path=path,
-                        evidence=value,
+                        evidence=f"private_or_local_host={urlparse(value.lstrip('=').strip()).hostname}",
                     )
                 )
 
