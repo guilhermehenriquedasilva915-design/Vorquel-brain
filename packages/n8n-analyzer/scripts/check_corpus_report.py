@@ -16,6 +16,34 @@ REQUIRED_DECISIONS = {
 }
 
 
+def _risk_index(payload: dict) -> list[dict]:
+    risky: list[dict] = []
+    for report in payload.get("reports", []):
+        if report.get("risk_decision") == "SAFE_FOR_LEARNING":
+            continue
+        risky.append(
+            {
+                "source_path": report.get("source_path"),
+                "risk_decision": report.get("risk_decision"),
+                "max_severity": report.get("max_severity"),
+                "rules": sorted(
+                    {
+                        finding.get("rule_id")
+                        for finding in report.get("findings", [])
+                        if finding.get("rule_id")
+                    }
+                ),
+            }
+        )
+    return sorted(
+        risky,
+        key=lambda item: (
+            0 if item["risk_decision"] == "BLOCKED" else 1,
+            str(item["source_path"]),
+        ),
+    )
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         raise SystemExit("usage: check_corpus_report.py REPORT.json")
@@ -51,7 +79,10 @@ def main() -> int:
             + ", ".join(missing_decisions)
         )
 
+    print("CORPUS_SUMMARY")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
+    print("RISK_INDEX_NO_EVIDENCE")
+    print(json.dumps(_risk_index(payload), indent=2, ensure_ascii=False))
     return 0
 
 
