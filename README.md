@@ -17,7 +17,8 @@ Repositório privado para componentes delimitados do cérebro operacional da Vor
 Vorquel-brain/
 ├─ packages/
 │  ├─ n8n-analyzer/              # triagem estática
-│  └─ n8n-knowledge-compiler/    # compila estrutura segura para conhecimento
+│  ├─ n8n-knowledge-compiler/    # compila estrutura segura para conhecimento
+│  └─ n8n-knowledge-writer/      # valida e persiste de forma append-only
 ├─ docs/                   # arquitetura e decisões técnicas
 ├─ sources/                # manifests/proveniência de fontes externas
 ├─ SECURITY.md             # trust boundary global
@@ -76,3 +77,26 @@ N8N_KNOWLEDGE_ITEM
 
 Nenhum destes estados = VORQUEL_VALIDATED.
 ```
+
+
+## Terceiro componente: n8n Knowledge Store
+
+A persistência V0.1 usa o schema privado `n8n_brain` em PostgreSQL/Supabase, com provenance, análise e Knowledge Items separados. O schema não concede acesso a `anon` ou `authenticated` e rejeita promoções de confiança incompatíveis com a V0.1.
+
+## Quarto componente: n8n Knowledge Writer
+
+O writer recebe somente um `N8N_KNOWLEDGE_ITEM` já compilado. Ele revalida o contrato e persiste com semântica append-only:
+
+```text
+N8N_KNOWLEDGE_ITEM
+        ↓
+writer validation
+        ↓
+source_snapshots
+        ↓
+workflow_analyses
+        ↓
+knowledge_items
+```
+
+Não existe caminho de UPDATE/DELETE no writer. Conflitos idempotentes iguais são aceitos; drift sob a mesma versão falha fechado.
