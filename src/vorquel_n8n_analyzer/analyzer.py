@@ -17,7 +17,11 @@ def _trigger_types(nodes: list[dict[str, Any]]) -> list[str]:
     for node in nodes:
         node_type = str(node.get("type", ""))
         lowered = node_type.lower()
-        if "trigger" in lowered or lowered.endswith(".cron") or lowered.endswith(".scheduletrigger"):
+        if (
+            "trigger" in lowered
+            or lowered.endswith(".cron")
+            or lowered.endswith(".scheduletrigger")
+        ):
             triggers.append(node_type)
     return sorted(set(triggers))
 
@@ -53,7 +57,9 @@ def analyze_workflow(
     return report.finalize()
 
 
-def analyze_file(path: str | Path, *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES) -> WorkflowReport:
+def analyze_file(
+    path: str | Path, *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
+) -> WorkflowReport:
     file_path = Path(path)
     try:
         raw = file_path.read_bytes()
