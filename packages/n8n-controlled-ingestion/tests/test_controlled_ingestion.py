@@ -76,7 +76,7 @@ def test_planner_skips_workflow_with_credentials(tmp_path):
     assert manifest["items"][0]["source_path"] == "b-safe.json"
 
 
-def test_planner_skips_untrusted_text(tmp_path):
+def test_planner_allows_tagged_untrusted_text_but_exposes_count(tmp_path):
     workflow = safe_workflow("Sticky")
     workflow["nodes"] = [
         {
@@ -87,6 +87,17 @@ def test_planner_skips_untrusted_text(tmp_path):
         }
     ]
     write_workflow(tmp_path, "a-note.json", workflow)
+
+    manifest = build(tmp_path, max_items=1)
+
+    assert manifest["items"][0]["source_path"] == "a-note.json"
+    assert manifest["items"][0]["untrusted_text_count"] == 1
+
+
+def test_planner_still_rejects_executable_content(tmp_path):
+    workflow = safe_workflow("Expression")
+    workflow["nodes"][0]["parameters"] = {"value": "={{ $json.user_input }}"}
+    write_workflow(tmp_path, "a-expression.json", workflow)
     write_workflow(tmp_path, "b-safe.json", safe_workflow("Safe"))
 
     manifest = build(tmp_path, max_items=1)
@@ -115,6 +126,8 @@ def test_load_manifest_rejects_path_traversal(tmp_path):
                 "risk_decision": "SAFE_FOR_LEARNING",
                 "knowledge_role": "REFERENCE_PATTERN",
                 "node_count": 1,
+                "untrusted_text_count": 0,
+                "finding_rules": [],
             }
         ],
     }
@@ -139,6 +152,8 @@ def test_load_manifest_rejects_more_than_four_items(tmp_path):
                 "risk_decision": "SAFE_FOR_LEARNING",
                 "knowledge_role": "REFERENCE_PATTERN",
                 "node_count": 1,
+                "untrusted_text_count": 0,
+                "finding_rules": [],
             }
             for index in range(5)
         ],
@@ -214,3 +229,4 @@ def test_planner_accepts_medium_network_structure_without_credentials(tmp_path):
 
     assert manifest["items"][0]["risk_decision"] == "SAFE_FOR_LEARNING"
     assert manifest["items"][0]["knowledge_role"] == "STRUCTURE_REFERENCE_RESTRICTED"
+    assert manifest["items"][0]["finding_rules"] == ["NETWORK_REQUEST"]
