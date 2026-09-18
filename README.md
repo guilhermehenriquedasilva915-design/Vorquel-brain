@@ -111,10 +111,10 @@ O fluxo é separado em duas fases:
 
 ```text
 planner (sem banco)
-  → manifest explícito STRICT_SAFE_V0_1
+  → manifest explícito CONTROLLED_STRUCTURE_V0_1
   → dry-run
   → --persist explícito
   → Knowledge Writer
 ```
 
-Na V0.1, cada manifest contém no máximo 4 workflows e só admite itens `SAFE_FOR_LEARNING` / `REFERENCE_PATTERN` sem findings, texto não confiável, executable metadata ou credentials. O objetivo é validar o caminho end-to-end com o menor conjunto possível antes de qualquer expansão do corpus.
+Na V0.1, cada manifest contém no máximo 4 workflows e só admite itens `SAFE_FOR_LEARNING` sem texto não confiável, executable metadata ou credentials. O perfil aceita `REFERENCE_PATTERN` e, quando os únicos findings são `NETWORK_REQUEST` MEDIUM, `STRUCTURE_REFERENCE_RESTRICTED` para topologia/metadados apenas. O objetivo é validar o caminho end-to-end com o menor conjunto possível antes de qualquer expansão do corpus.
