@@ -133,3 +133,22 @@ def test_hardcoded_secret_is_redacted_in_evidence():
     )
     assert finding.evidence != "super-secret-value-123456"
     assert "super-secret-value-123456" not in (finding.evidence or "")
+
+
+def test_noop_named_ai_agent_does_not_escalate_to_critical():
+    report = report_for(
+        [
+            {
+                "name": "AI Agent",
+                "type": "n8n-nodes-base.noOp",
+                "parameters": {},
+            },
+            {
+                "name": "Execute Command",
+                "type": "n8n-nodes-base.executeCommand",
+                "parameters": {},
+            },
+        ]
+    )
+    assert "AI_WITH_PRIVILEGED_EXECUTION" not in rules(report)
+    assert report.risk_decision == "REVIEW_REQUIRED"
