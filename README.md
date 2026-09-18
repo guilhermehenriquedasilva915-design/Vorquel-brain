@@ -16,7 +16,8 @@ Repositório privado para componentes delimitados do cérebro operacional da Vor
 ```text
 Vorquel-brain/
 ├─ packages/
-│  └─ n8n-analyzer/       # pacote independente e extraível
+│  ├─ n8n-analyzer/              # triagem estática
+│  └─ n8n-knowledge-compiler/    # compila estrutura segura para conhecimento
 ├─ docs/                   # arquitetura e decisões técnicas
 ├─ sources/                # manifests/proveniência de fontes externas
 ├─ SECURITY.md             # trust boundary global
@@ -52,3 +53,26 @@ SAFE_FOR_LEARNING -> SANDBOX_TESTED -> VORQUEL_VALIDATED
 ```
 
 `SAFE_FOR_LEARNING` **não** significa “seguro para produção”; significa apenas que o analisador estático MVP não encontrou achados HIGH/CRITICAL.
+
+
+## Segundo componente: n8n Knowledge Compiler
+
+O compiler recebe um workflow e o relatório do analyzer e gera um `N8N_KNOWLEDGE_ITEM` determinístico.
+
+Ele preserva topologia, node types, resources, operations, triggers e proveniência, mas mantém linguagem natural como `UNTRUSTED_TEXT` e não persiste conteúdo executável de Code/Function/expressions/shell/SSH.
+
+Fluxo atual:
+
+```text
+RAW_UNTRUSTED
+      ↓
+STATIC_ANALYZED
+      ↓
+N8N_KNOWLEDGE_ITEM
+      ├─ REFERENCE_PATTERN
+      ├─ STRUCTURE_REFERENCE_RESTRICTED
+      ├─ QUARANTINED_REFERENCE
+      └─ SECURITY_EXAMPLE
+
+Nenhum destes estados = VORQUEL_VALIDATED.
+```
