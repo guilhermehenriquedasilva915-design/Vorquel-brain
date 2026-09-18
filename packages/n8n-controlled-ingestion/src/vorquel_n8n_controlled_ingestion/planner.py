@@ -10,10 +10,10 @@ from .common import (
     MAX_MANIFEST_ITEMS,
     MAX_WORKFLOW_BYTES,
     ControlledIngestionError,
+    controlled_structure_item,
     read_json_object,
     safe_relative_path,
     sha256_bytes,
-    controlled_structure_item,
     workflow_has_credentials,
 )
 
