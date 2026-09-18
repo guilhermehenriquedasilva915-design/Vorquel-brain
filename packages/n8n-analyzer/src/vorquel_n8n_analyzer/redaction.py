@@ -12,9 +12,7 @@ _SECRET_PATTERNS = [
 
 
 def mask(value: str) -> str:
-    if len(value) <= 6:
-        return "<redacted>"
-    return f"{value[:3]}…{value[-2:]}"
+    return f"<redacted:length={len(value)}>"
 
 
 def redact_text(text: str, limit: int = 240) -> str:
