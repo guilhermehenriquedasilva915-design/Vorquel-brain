@@ -192,11 +192,13 @@ def _extract_untrusted_material(
                 item["preview"] = redact_text(value)
             texts.append(item)
 
-    sort_key = lambda item: (
-        item["node_name"],
-        item["json_path"],
-        item["sha256"],
-    )
+    def sort_key(item: dict[str, Any]) -> tuple[str, str, str]:
+        return (
+            str(item["node_name"]),
+            str(item["json_path"]),
+            str(item["sha256"]),
+        )
+
     return sorted(texts, key=sort_key), sorted(executable, key=sort_key)
 
 
