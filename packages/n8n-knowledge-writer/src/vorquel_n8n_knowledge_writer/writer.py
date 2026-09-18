@@ -241,27 +241,24 @@ def _knowledge(
     return str(existing["id"]), False
 
 
-def write_prepared_records(
-    connection: Connection[Any],
-    records: PreparedRecords,
-) -> WriteResult:
-    with connection.transaction(), connection.cursor() as cursor:
-        cursor.execute("set local role n8n_brain_writer")
-        cursor.execute("set local statement_timeout = '5s'")
-        cursor.execute("set local lock_timeout = '2s'")
+def _configure_writer_transaction(cursor) -> None:
+    cursor.execute("set local role n8n_brain_writer")
+    cursor.execute("set local statement_timeout = '5s'")
+    cursor.execute("set local lock_timeout = '2s'")
 
-        source_id, source_created = _source(cursor, records.source)
-        analysis_id, analysis_created = _analysis(
-            cursor,
-            source_id=source_id,
-            record=records.analysis,
-        )
-        knowledge_id, knowledge_created = _knowledge(
-            cursor,
-            analysis_id=analysis_id,
-            record=records.knowledge,
-        )
 
+def _write_one(cursor, records: PreparedRecords) -> WriteResult:
+    source_id, source_created = _source(cursor, records.source)
+    analysis_id, analysis_created = _analysis(
+        cursor,
+        source_id=source_id,
+        record=records.analysis,
+    )
+    knowledge_id, knowledge_created = _knowledge(
+        cursor,
+        analysis_id=analysis_id,
+        record=records.knowledge,
+    )
     return WriteResult(
         source_id=source_id,
         analysis_id=analysis_id,
@@ -270,6 +267,27 @@ def write_prepared_records(
         analysis_created=analysis_created,
         knowledge_created=knowledge_created,
     )
+
+
+def write_prepared_records(
+    connection: Connection[Any],
+    records: PreparedRecords,
+) -> WriteResult:
+    with connection.transaction(), connection.cursor() as cursor:
+        _configure_writer_transaction(cursor)
+        return _write_one(cursor, records)
+
+
+def write_prepared_records_batch(
+    connection: Connection[Any],
+    records: list[PreparedRecords],
+) -> list[WriteResult]:
+    if not records:
+        return []
+
+    with connection.transaction(), connection.cursor() as cursor:
+        _configure_writer_transaction(cursor)
+        return [_write_one(cursor, record) for record in records]
 
 
 def write_knowledge_item(
