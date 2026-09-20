@@ -23,6 +23,21 @@ Projeto de destino quando autorizado: **vorquel-content-brain**
 - os invariantes de isolamento, revisao, classificacao e versionamento passam
   (`supabase/tests/knowledge_scope_and_external_sources.sql`).
 
+## Achado que muda a urgencia: a aprovacao ja esta quebrada no projeto live
+
+A `0020` adicionou `valid_from`, fez backfill das linhas existentes e marcou a
+coluna `NOT NULL` — **sem default e sem ensinar `approve_knowledge_candidate` a
+preenche-la**. O corpo da funcao em `0018` nao seta `valid_from`.
+
+Consequencia: **toda aprovacao tentada no projeto gerenciado desde a 0020 falha**
+com violacao de not-null. Nenhum job de CI deste repositorio aplicava migration,
+entao o caminho de aprovacao nunca foi exercitado fora do projeto live — foi o
+job `knowledge-migrations` novo que expos isso.
+
+A `0023` corrige nos dois lugares: default na coluna e `valid_from` explicito na
+aprovacao. Isso reclassifica a 0023: ela nao e so uma feature de LEARN, e tambem
+o conserto de um caminho que hoje esta quebrado em producao.
+
 ## Risco de aplicar live
 
 `0021` e `0023` sao aditivas, mas tres pontos merecem atencao do operador:
