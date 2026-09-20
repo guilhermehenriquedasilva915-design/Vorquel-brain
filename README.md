@@ -20,6 +20,7 @@ Vorquel-brain/
 │  ├─ n8n-knowledge-compiler/    # compila estrutura segura para conhecimento
 │  ├─ n8n-knowledge-writer/      # valida e persiste de forma append-only
 │  ├─ n8n-controlled-ingestion/  # manifest-gated real-corpus ingestion
+│  ├─ n8n-brain-learn/          # adaptadores de fonte → candidatos revisáveis
 │  └─ n8n-brain-retrieval/      # retrieval unificado com escopo + brain doctor
 ├─ .claude/skills/n8n-brain/ # Skill única: LEARN/ASK/BUILD/DEBUG/EVOLVE
 ├─ docs/                   # arquitetura e decisões técnicas
@@ -128,6 +129,15 @@ A Skill `.claude/skills/n8n-brain/` é o ponto de entrada único. `SKILL.md`
 identifica a intenção e carrega apenas o procedimento necessário
 (`references/LEARN.md`, `ASK.md`, `BUILD.md`, `DEBUG.md`, `EVOLVE.md`), sob as
 regras globais em `TRUST.md`, `DATA_POLICY.md`, `APPROVALS.md` e `N8N_DEV.md`.
+
+O pacote `n8n-brain-learn` é a outra metade: transforma uma fonte externa
+(mensagem, `.txt`, `.md`, `.json`, PDF, DOCX, repositório Git, workflow n8n,
+vídeo via Vorquel Watch) em **candidatos PENDENTES**, com escopo, classificação
+e citação. Ele não aprova nada — não existe caminho no pacote que transforme um
+candidato em conhecimento. Um segredo é recusado em vez de minimizado; PII é
+minimizada; todo texto de fonte permanece `UNTRUSTED_DERIVED` com autoridade
+`NONE`. Detalhes em `packages/n8n-brain-learn/README.md`; o estado de cada gate
+do PR1 está em `docs/PR1_ACCEPTANCE_MATRIX.md`.
 
 O pacote `n8n-brain-retrieval` monta um CONTEXT PACK citado a partir da memória
 semântica revisada (`vorquel_knowledge`), da memória estrutural (`n8n_brain`) e

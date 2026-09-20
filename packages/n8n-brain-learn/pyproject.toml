@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vorquel-n8n-brain-learn"
+version = "0.1.0"
+description = "Source adapters that turn external material into reviewable, scoped, cited knowledge candidates"
+requires-python = ">=3.12"
+dependencies = [
+  "psycopg[binary]>=3.1",
+  "pypdf>=4.2",
+  "python-docx>=1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "ruff>=0.5",
+]
+
+[project.scripts]
+vorquel-brain-learn = "vorquel_n8n_brain_learn.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
