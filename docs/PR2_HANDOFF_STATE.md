@@ -6,15 +6,30 @@ or re-prove it.
 
 ## Start here
 
-The n8n MCP tools are registered but were added mid-session last time, so they
-only load in a **new** session. Confirm they are live before building:
+Confirm the n8n MCP tools are live before building:
 
 ```
 ToolSearch  select:mcp__n8n__search_workflows,mcp__n8n__validate_workflow
 ```
 
-If that returns nothing, the tools are still not loaded and no BUILD step can
-be proven. Do not proceed by assuming.
+If that returns nothing, the tools are not loaded and no BUILD step can be
+proven. Do not proceed by assuming.
+
+**A new session is not sufficient.** The earlier guess — that the tools were
+merely added mid-session and would appear in the next one — was tested on
+2026-09-20 and is wrong. A fresh non-interactive session still had no
+`mcp__n8n__*` tools, while `claude mcp list` reported `n8n … ✔ Connected` and
+the DEV container was healthy. The server and the OAuth token are fine; the
+session simply never received the tools, and never said so.
+
+The workspace is untrusted (`hasTrustDialogAccepted: false` in `~/.claude.json`),
+and the registration is project-local, which is the leading explanation but not
+a proven one. See the workspace-trust note in `N8N_MCP_TOOL_MATRIX.md` for the
+full evidence table and the alternative that was not ruled out.
+
+**What to do:** accept the trust dialog once in an interactive session in this
+workspace, then re-run the `ToolSearch` check above. Do not spend another
+session re-deriving the diagnosis.
 
 ## Branch
 
@@ -100,5 +115,33 @@ request → context pack → environment profile → plan → draft
 → SAFE TEST → assertions/report
 ```
 
-None of it exists yet. The credential guard and safe-test gate are specified in
-the tool matrix but not implemented.
+### Done, and provable without the MCP tools
+
+`packages/n8n-build-guard` — the two guards the tool matrix specified. Both are
+pure functions over recorded evidence, so they are fully tested offline and did
+not wait on the tool surface. 59 tests, `n8n-build-guard-quality` in CI.
+
+| Module | What it settles |
+|---|---|
+| `node_risk.py` | Two *independent* axes per node: `verdict` (host danger → precondition 4) and `requires_pinning` (reaches outside → precondition 7) |
+| `credential_guard.py` | Reads back `autoAssignedCredentials`, compares ids/aliases/types only, and raises `CredentialValueLeak` if the payload carries a value at all |
+| `safe_test_gate.py` | The seven preconditions as an ordered gate where absence of evidence is failure: `evaluate(SafeTestEvidence())` → `REFUSE` |
+
+Two design notes worth keeping, because both were mistakes caught by tests:
+
+- **The two axes must stay separate.** The first draft marked only dangerous
+  nodes as needing pinning — which made precondition 7 unreachable dead code,
+  since precondition 4 rejects those nodes first. An HTTP Request node is the
+  case that matters: harmless to the host, so it clears 4, and unsafe only if
+  pin data missed it, which is what 7 checks.
+- **The node-type sets are duplicated from the Analyzer, not imported,** so the
+  execution guard has no dependency on the learning-side package.
+  `test_analyzer_parity.py` asserts they stay identical, and CI fails if those
+  tests are skipped rather than run — a skip would hide drift.
+
+### Still to build, and blocked on the tool surface
+
+Everything that calls the server: context pack → plan → draft, deterministic
+validation of a draft, `validate_workflow`, snapshot/drift, create/update DEV,
+the SAFE TEST call itself, and the assertions/report. The gate that *decides*
+whether SAFE TEST may run exists; the step that runs it does not.

@@ -131,6 +131,31 @@ A non-interactive run in an untrusted workspace prints:
 > Ignoring N permissions.allow entries … this workspace has not been trusted.
 
 Only `allow` is dropped. `deny` still applies — verified by running a denied
-command and watching it be refused. The failure mode is extra prompts, not
-silent permission. Accepting the trust dialog once removes the friction
-without changing the safety posture.
+command and watching it be refused. That part still holds, and the safety
+posture is unchanged either way.
+
+**But "the failure mode is extra prompts" understated it.** On 2026-09-20 a new
+non-interactive session in this untrusted workspace got *no* `mcp__n8n__*` tools
+at all. Not denied, not prompted — absent, and absent silently: the session's
+own list of connected and unauthenticated MCP servers never mentioned `n8n`.
+
+What was observed, and what was not:
+
+| Observed | How |
+|---|---|
+| The server and token are fine | `claude mcp list` → `n8n: http://127.0.0.1:5678/mcp-server/http (HTTP) - ✔ Connected` |
+| DEV is up and correct | `vorquel-n8n-dev` Up, `n8nio/n8n:2.39.8`, `127.0.0.1:5678->5678/tcp` |
+| The endpoint rejects anonymous callers | unauthenticated `initialize` → `401 Unauthorized: Authorization header not sent` |
+| The registration exists | `~/.claude.json` → `projects["C:/VORQUEL/VORQUEL N8N/Vorquel-brain"].mcpServers.n8n` |
+| The workspace is untrusted | same entry: `hasTrustDialogAccepted: false` |
+
+The registration is **project-local**, so the leading explanation is that an
+untrusted workspace skips loading it. That is a hypothesis, not a proven
+mechanism — it was not confirmed against client internals, and a second
+candidate (the drive-letter case of the project key, which this session was seen
+to flip between `c:` and `C:`) was not ruled out.
+
+The consequence is what matters, and it is not a prompt: **no BUILD step can be
+proven in a session that has no n8n tools.** Accept the trust dialog once, in an
+interactive session, and confirm the tools are present before building — the
+check at the top of `PR2_HANDOFF_STATE.md` exists for exactly this.
