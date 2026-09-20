@@ -20,6 +20,7 @@ dev = [
 [project.scripts]
 vorquel-brain-retrieve = "vorquel_n8n_brain_retrieval.cli:main"
 vorquel-brain-doctor = "vorquel_n8n_brain_retrieval.doctor_cli:main"
+vorquel-n8n-profile = "vorquel_n8n_brain_retrieval.profile_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
