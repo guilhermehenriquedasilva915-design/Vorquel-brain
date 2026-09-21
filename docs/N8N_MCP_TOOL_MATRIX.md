@@ -159,3 +159,69 @@ The consequence is what matters, and it is not a prompt: **no BUILD step can be
 proven in a session that has no n8n tools.** Accept the trust dialog once, in an
 interactive session, and confirm the tools are present before building — the
 check at the top of `PR2_HANDOFF_STATE.md` exists for exactly this.
+
+## Reconciliation: 33 server / 23 visible / 10 deny-hidden
+
+Settled 2026-09-21, mechanically, against recorded evidence — not re-derived
+by eye. The three numbers close exactly:
+
+```
+server      33   = allow 19 + ask 4 + deny 10   (the matrix above)
+visible     23   = allow 19 + ask 4             (deny hides a tool from the surface)
+deny-hidden 10
+                   23 + 10 = 33
+```
+
+Checked at the same time, and all three held:
+
+| Assertion | Result |
+|---|---|
+| The matrix lists exactly 33 observed tools | 33 |
+| No tool sits in two buckets | none |
+| Every observed tool's `settings.json` bucket equals its matrix policy | 0 disagreements |
+
+### The 16 rules that are not part of the 33
+
+`.claude/settings.json` carries **49** `mcp__n8n__*` entries, not 33. The
+difference is 16 deny rules naming tools this server does not expose:
+
+`activate_workflow`, `create_agent`, `create_credential`, `deactivate_workflow`,
+`delete_credential`, `delete_data_table`, `delete_data_table_rows`,
+`delete_execution`, `delete_workflow`, `execute_workflow`,
+`install_community_node`, `publish_agent`, `publish_workflow`, `run_workflow`,
+`update_credential`, `update_data_table_rows`.
+
+All 16 are `deny`, so they cost nothing and are worth keeping against a future
+n8n version — but **they block nothing today** and must never be counted as
+active protection. `vorquel-brain-doctor` already enforces this split:
+`_check_n8n_deny_rules` grades only against `observed_tools(profile)` and
+reports the remainder separately as *guarda futura*. With no observed surface
+it refuses to grade at all rather than pass vacuously.
+
+So "33 tools, 33 rules" is a statement about the **observed surface**, not
+about the size of `settings.json`. Both are correct; they count different
+things.
+
+### What is proven, and what is not
+
+Proven offline: the arithmetic, the bucket agreement, and the 16-rule residue.
+These follow from the recorded matrix plus `settings.json`.
+
+**Not** proven: that a live session actually sees 23 tools. That leg was
+observed once, in the session that enumerated the surface. Re-confirming it
+needs a trusted interactive session with the DEV instance up — see below.
+
+## Blocker status, 2026-09-21
+
+Two independent blockers, both live:
+
+| Blocker | Evidence today |
+|---|---|
+| No `mcp__n8n__*` tools in session | `ToolSearch select:mcp__n8n__search_workflows,…` → no match; `hasTrustDialogAccepted: false` |
+| DEV instance is down | Docker daemon not running: `npipe:////./pipe/dockerDesktopLinuxEngine` not found |
+
+The second is new and was not present on 2026-09-20. Accepting the trust
+dialog alone is no longer sufficient: start Docker Desktop, run
+`%LOCALAPPDATA%\Vorquel\bin\start-n8n-dev.ps1`, confirm healthz, *then* accept
+trust and re-run the `ToolSearch` check. BUILD + SAFE TEST E2E cannot begin
+until both are green.
