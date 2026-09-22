@@ -1,0 +1,35 @@
+{
+  "description": "An absence of evidence written as a negative fact. 'We have not checked whether they use a CRM' becoming 'they do not use a CRM', with nothing downstream able to tell the difference.",
+  "expect_violation_codes": [
+    "NO_EVIDENCE_SERIALIZED_AS_FALSE"
+  ],
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-H",
+      "subject_entity_id": "ENT-H",
+      "predicate": "synthetic_predicate",
+      "object_value": false,
+      "epistemic_status": "DESCONHECIDO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "source_ids": [
+        "SRC-1"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-1"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    }
+  ]
+}

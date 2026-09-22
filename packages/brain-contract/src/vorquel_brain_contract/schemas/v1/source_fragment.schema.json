@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/source_fragment.schema.json",
+  "title": "SourceFragment",
+  "description": "The addressable piece of a source that a claim or evidence item actually rests on. Carrying one locator kind per medium is what lets a transcript interval or an OCR block be cited as precisely as a text range, instead of forcing character offsets onto media that has none.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "SourceFragment"
+    },
+    "fragment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fragment_type": {
+      "type": "string",
+      "enum": [
+        "TEXT",
+        "MESSAGE",
+        "TRANSCRIPT_INTERVAL",
+        "PAGE",
+        "FRAME",
+        "OCR_BLOCK",
+        "TABLE",
+        "CODE"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "provenance": {
+      "$ref": "https://schemas.vorquel/brain/shared/provenance.schema.json"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "fragment_id",
+    "source_id",
+    "fragment_type",
+    "content",
+    "content_hash",
+    "created_at",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

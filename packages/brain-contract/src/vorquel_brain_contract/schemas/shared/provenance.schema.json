@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/provenance.schema.json",
+  "title": "Provenance",
+  "description": "A traceable pointer back to where something came from. Deliberately a structure and not a free string: a sentence describing an origin cannot be followed, checked or invalidated later. It points at the source rather than copying it, so the source stays the single place the content lives.",
+  "type": "object",
+  "properties": {
+    "source_id": { "type": "string", "minLength": 1 },
+    "fragment_id": { "type": "string", "minLength": 1 },
+    "locator": { "$ref": "https://schemas.vorquel/brain/shared/locator.schema.json" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "content_hash": {
+      "description": "Hash of the referenced content when available, so a later read can tell whether what it found is what was cited.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": ["source_id"],
+  "additionalProperties": false
+}

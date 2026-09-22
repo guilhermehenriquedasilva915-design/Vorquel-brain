@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/claim.schema.json",
+  "title": "Claim",
+  "description": "One statement about one entity, carrying how it is known. epistemic_status is not decoration: OBSERVADO and MEDIDO assert something about the world and are rejected without provenance. object_value may carry the NO_EVIDENCE_FOUND marker, which represents a gap in the record and must never be written as false.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Claim"
+    },
+    "claim_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "subject_entity_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "predicate": {
+      "type": "string",
+      "minLength": 1
+    },
+    "object_value": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "object_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "epistemic_status": {
+      "type": "string",
+      "enum": [
+        "OBSERVADO",
+        "DECLARADO",
+        "MEDIDO",
+        "INFERIDO",
+        "HIPOTESE",
+        "ESTIMADO",
+        "DESCONHECIDO",
+        "CONFLITANTE",
+        "INVALIDADO"
+      ]
+    },
+    "verification_state": {
+      "description": "A separate axis from epistemic_status. Whether a human reviewed something says nothing about how it was known, and merging the two loses both.",
+      "type": "string",
+      "enum": [
+        "UNREVIEWED",
+        "REVIEWED",
+        "APPROVED",
+        "REJECTED",
+        "SUPERSEDED"
+      ],
+      "default": "UNREVIEWED"
+    },
+    "scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "sensitivity": {
+      "$ref": "https://schemas.vorquel/brain/shared/sensitivity.schema.json"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.vorquel/brain/shared/provenance.schema.json"
+      },
+      "default": []
+    },
+    "supporting_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "counter_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "valid_from": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "superseded_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "SUPERSEDED",
+        "RETRACTED",
+        "DISPUTED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "claim_id",
+    "subject_entity_id",
+    "predicate",
+    "epistemic_status",
+    "scope",
+    "source_ids",
+    "supporting_evidence_ids",
+    "counter_evidence_ids",
+    "status",
+    "created_at",
+    "last_updated_at"
+  ],
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "required": [
+        "object_value"
+      ]
+    },
+    {
+      "required": [
+        "object_entity_id"
+      ]
+    }
+  ]
+}

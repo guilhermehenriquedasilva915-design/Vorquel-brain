@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/candidate.schema.json",
+  "title": "Candidate",
+  "description": "Something proposed for the record but not yet in it. A Candidate is the only shape an AI-originated assertion may take: it sits on the review boundary and is never canonical, which is what keeps write asymmetry real rather than merely stated. proposed_epistemic_status is a request, not a grant.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Candidate"
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_type": {
+      "type": "string",
+      "enum": [
+        "CLAIM",
+        "ENTITY",
+        "EVIDENCE",
+        "HYPOTHESIS",
+        "UNKNOWN",
+        "RELATION"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.vorquel/brain/shared/provenance.schema.json"
+      },
+      "default": []
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "MERGED",
+        "CONFLICTING"
+      ]
+    },
+    "proposed_epistemic_status": {
+      "type": "string",
+      "enum": [
+        "OBSERVADO",
+        "DECLARADO",
+        "MEDIDO",
+        "INFERIDO",
+        "HIPOTESE",
+        "ESTIMADO",
+        "DESCONHECIDO",
+        "CONFLITANTE",
+        "INVALIDADO"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "candidate_id",
+    "candidate_type",
+    "payload",
+    "entity_scope",
+    "source_ids",
+    "created_by",
+    "created_at",
+    "status",
+    "proposed_epistemic_status"
+  ],
+  "additionalProperties": false
+}

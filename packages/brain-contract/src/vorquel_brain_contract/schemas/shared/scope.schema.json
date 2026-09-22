@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/scope.schema.json",
+  "title": "Scope",
+  "description": "Where an object belongs. Six scope types, per DIV-3. A company is not a scope: it is an Entity with entity_type=COMPANY, addressed by scope_type=ENTITY. The live database still accepts only four of these six; Brain-V1-A runs no migration and nothing may assume otherwise until Brain-V1-B.",
+  "type": "object",
+  "properties": {
+    "scope_type": {
+      "type": "string",
+      "enum": ["GLOBAL_VORQUEL","VERTICAL","ENTITY","CLIENT","PROJECT","PRIVATE_TEST"]
+    },
+    "scope_id": {
+      "description": "Identifier within the scope type. GLOBAL_VORQUEL uses the literal GLOBAL, which keeps the global scope from being addressable by any other id.",
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": ["scope_type", "scope_id"],
+  "additionalProperties": false,
+  "if": { "properties": { "scope_type": { "const": "GLOBAL_VORQUEL" } }, "required": ["scope_type"] },
+  "then": { "properties": { "scope_id": { "const": "GLOBAL" } } },
+  "else": { "properties": { "scope_id": { "not": { "const": "GLOBAL" } } } }
+}

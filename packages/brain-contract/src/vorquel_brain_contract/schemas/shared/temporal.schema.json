@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/temporal.schema.json",
+  "title": "Temporal",
+  "description": "When something happened, when it was written down, and how long it holds. occurred_at and recorded_at are kept apart because the gap between them is itself information. supersedes/superseded_by record replacement: SUPERSEDED means a newer statement took over, which is not the same as INVALIDATED, where the statement was wrong.",
+  "type": "object",
+  "properties": {
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "recorded_at": { "type": "string", "format": "date-time" },
+    "valid_from": { "type": "string", "format": "date-time" },
+    "valid_until": { "type": ["string","null"], "format": "date-time" },
+    "supersedes": { "type": ["string","null"] },
+    "superseded_by": { "type": ["string","null"] }
+  },
+  "additionalProperties": false
+}

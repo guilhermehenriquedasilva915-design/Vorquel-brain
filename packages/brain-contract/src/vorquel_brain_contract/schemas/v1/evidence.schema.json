@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/evidence.schema.json",
+  "title": "Evidence",
+  "description": "An observation bearing on a claim, with the direction it points. Evidence never promotes a conclusion by itself: SUPPORTS is a vote, not a verdict, and NEUTRAL is a real result recording that something was checked and settled nothing.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Evidence"
+    },
+    "evidence_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fragment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "subject_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence_type": {
+      "type": "string",
+      "enum": [
+        "DIRECT_STATEMENT",
+        "MEASUREMENT",
+        "ARTIFACT",
+        "OBSERVATION",
+        "PUBLIC_RESEARCH",
+        "DERIVED_ANALYSIS"
+      ]
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "SUPPORTS",
+        "CONTRADICTS",
+        "NEUTRAL"
+      ]
+    },
+    "strength": {
+      "type": "string",
+      "enum": [
+        "WEAK",
+        "MODERATE",
+        "STRONG"
+      ]
+    },
+    "epistemic_status": {
+      "type": "string",
+      "enum": [
+        "OBSERVADO",
+        "DECLARADO",
+        "MEDIDO",
+        "INFERIDO",
+        "HIPOTESE",
+        "ESTIMADO",
+        "DESCONHECIDO",
+        "CONFLITANTE",
+        "INVALIDADO"
+      ]
+    },
+    "verification_state": {
+      "description": "A separate axis from epistemic_status. Whether a human reviewed something says nothing about how it was known, and merging the two loses both.",
+      "type": "string",
+      "enum": [
+        "UNREVIEWED",
+        "REVIEWED",
+        "APPROVED",
+        "REJECTED",
+        "SUPERSEDED"
+      ],
+      "default": "UNREVIEWED"
+    },
+    "sensitivity": {
+      "$ref": "https://schemas.vorquel/brain/shared/sensitivity.schema.json"
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "https://schemas.vorquel/brain/shared/provenance.schema.json"
+      },
+      "default": []
+    },
+    "observed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "evidence_id",
+    "source_id",
+    "fragment_ids",
+    "entity_scope",
+    "evidence_type",
+    "direction",
+    "strength",
+    "epistemic_status",
+    "created_at"
+  ],
+  "additionalProperties": false
+}

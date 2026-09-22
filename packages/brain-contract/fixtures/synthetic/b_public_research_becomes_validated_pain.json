@@ -1,0 +1,90 @@
+{
+  "description": "Public market research turned into a validated operational pain. Nobody observed or measured anything inside the company, so OBSERVADO is not available at any strength of research.",
+  "expect_violation_codes": [
+    "PUBLIC_RESEARCH_CANNOT_GROUND_OBSERVATION"
+  ],
+  "sources": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Source",
+      "source_id": "SRC-PUBLIC",
+      "source_type": "WEB_PAGE",
+      "title": "synthetic source",
+      "origin": "synthetic://SRC-PUBLIC",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "captured_at": "2026-03-01T12:00:00+00:00",
+      "ingested_at": "2026-03-01T12:00:00+00:00",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "sensitivity_level": "PUBLIC",
+      "data_classes": [],
+      "trust_class": "PUBLIC",
+      "instruction_authority": "NONE",
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "ACTIVE",
+      "metadata": {}
+    }
+  ],
+  "evidence": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Evidence",
+      "evidence_id": "EV-PUBLIC",
+      "source_id": "SRC-PUBLIC",
+      "fragment_ids": [
+        "EV-PUBLIC-frag"
+      ],
+      "entity_scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-beta"
+      },
+      "subject_entity_id": "ENT-CLIENT-B",
+      "evidence_type": "PUBLIC_RESEARCH",
+      "direction": "SUPPORTS",
+      "strength": "MODERATE",
+      "epistemic_status": "OBSERVADO",
+      "verification_state": "UNREVIEWED",
+      "provenance": [
+        {
+          "source_id": "SRC-PUBLIC",
+          "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "observed_at": "2026-03-01T12:00:00+00:00",
+      "created_at": "2026-03-01T12:00:00+00:00"
+    }
+  ],
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-B",
+      "subject_entity_id": "ENT-CLIENT-B",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "OBSERVADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-beta"
+      },
+      "source_ids": [
+        "SRC-PUBLIC"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-PUBLIC"
+        }
+      ],
+      "supporting_evidence_ids": [
+        "EV-PUBLIC"
+      ],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    }
+  ]
+}

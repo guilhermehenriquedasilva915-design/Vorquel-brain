@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/locator.schema.json",
+  "title": "Locator",
+  "description": "Where inside a source a fragment sits. One locator kind per medium rather than character offsets for everything: a transcript interval, a video frame and an OCR block cannot honestly be addressed as text ranges, and forcing them to be loses the address.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["CHAR_RANGE","LINE_RANGE","PAGE_NUMBER","TIME_INTERVAL","FRAME_INDEX","BBOX","MESSAGE_ID","JSON_POINTER"]
+    },
+    "start": { "type": ["integer","number","string"] },
+    "end": { "type": ["integer","number","string"] },
+    "page": { "type": "integer", "minimum": 1 },
+    "frame_index": { "type": "integer", "minimum": 0 },
+    "bbox": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 },
+    "message_id": { "type": "string" },
+    "json_pointer": { "type": "string" }
+  },
+  "required": ["kind"],
+  "additionalProperties": false
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/envelope.schema.json",
+  "title": "Envelope",
+  "description": "The version header every V1 object carries. Versioning is explicit in the payload, not inferred from the directory a file happens to sit in, so an object stays identifiable once it has been copied, logged or sent somewhere else.",
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "description": "Semantic version of the Brain contract this object claims to conform to. A breaking change means a new version, never a redefinition of this one.",
+      "type": "string",
+      "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$"
+    },
+    "object_type": {
+      "type": "string",
+      "enum": ["Entity","Source","SourceFragment","Claim","Evidence","Hypothesis","Unknown","Decision","Candidate","Event","StateProjection","ContextPack"]
+    }
+  },
+  "required": ["contract_version", "object_type"]
+}

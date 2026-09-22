@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/state_projection.schema.json",
+  "title": "StateProjection",
+  "description": "The current picture for a scope, derived from everything else and rebuildable from it. A StateProjection is never a source: derived_from_ids and as_of exist so a reader can tell what it was built from and how old that makes it, and freshness_status exists so staleness is stated rather than guessed.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "StateProjection"
+    },
+    "state_projection_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "active_decision_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "current_claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "open_hypothesis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "open_unknown_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "conflicts": {
+      "description": "Contradictions left standing on purpose. A conflict is reported, never resolved by the projection itself.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "next_best_learning": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "derived_from_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "freshness_status": {
+      "type": "string",
+      "enum": [
+        "FRESH",
+        "STALE",
+        "UNKNOWN_FRESHNESS"
+      ],
+      "description": "Whether the derived picture can still be relied on. Pinned to the canonical BRAIN CONTRACT V1 vocabulary: FRESH, STALE, UNKNOWN_FRESHNESS. Staleness is stated rather than guessed, and UNKNOWN_FRESHNESS is a real answer meaning nobody has established how old this is."
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "state_projection_id",
+    "entity_scope",
+    "as_of",
+    "summary",
+    "active_decision_ids",
+    "current_claim_ids",
+    "open_hypothesis_ids",
+    "open_unknown_ids",
+    "conflicts",
+    "derived_from_ids",
+    "freshness_status"
+  ],
+  "additionalProperties": false
+}

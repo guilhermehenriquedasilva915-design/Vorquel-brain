@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/unknown.schema.json",
+  "title": "Unknown",
+  "description": "A named gap in what is known. An Unknown is not a Question and not a false value: it records that something has not been established, which is a different state from having established that it is not so.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Unknown"
+    },
+    "unknown_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "PARTIALLY_RESOLVED",
+        "RESOLVED",
+        "NO_LONGER_RELEVANT"
+      ]
+    },
+    "related_hypothesis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "related_question_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "unknown_id",
+    "entity_scope",
+    "statement",
+    "priority",
+    "status",
+    "related_hypothesis_ids",
+    "related_question_ids",
+    "created_at",
+    "last_updated_at"
+  ],
+  "additionalProperties": false
+}

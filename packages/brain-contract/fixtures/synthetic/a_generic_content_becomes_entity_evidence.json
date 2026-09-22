@@ -1,0 +1,90 @@
+{
+  "description": "Transversal sales material shared in a conversation about one client. It is evidence about the material, not about the client, and must not ground an OBSERVADO claim scoped to that client.",
+  "expect_violation_codes": [
+    "GENERIC_EVIDENCE_CANNOT_GROUND_ENTITY_OBSERVATION"
+  ],
+  "sources": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Source",
+      "source_id": "SRC-GENERIC",
+      "source_type": "DOCUMENT",
+      "title": "generic sales playbook",
+      "origin": "synthetic://SRC-GENERIC",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "captured_at": "2026-03-01T12:00:00+00:00",
+      "ingested_at": "2026-03-01T12:00:00+00:00",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "sensitivity_level": "INTERNAL",
+      "data_classes": [],
+      "trust_class": "FIRST_PARTY",
+      "instruction_authority": "NONE",
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "ACTIVE",
+      "metadata": {}
+    }
+  ],
+  "evidence": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Evidence",
+      "evidence_id": "EV-GENERIC",
+      "source_id": "SRC-GENERIC",
+      "fragment_ids": [
+        "EV-GENERIC-frag"
+      ],
+      "entity_scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "subject_entity_id": null,
+      "evidence_type": "DIRECT_STATEMENT",
+      "direction": "SUPPORTS",
+      "strength": "MODERATE",
+      "epistemic_status": "OBSERVADO",
+      "verification_state": "UNREVIEWED",
+      "provenance": [
+        {
+          "source_id": "SRC-GENERIC",
+          "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "observed_at": "2026-03-01T12:00:00+00:00",
+      "created_at": "2026-03-01T12:00:00+00:00"
+    }
+  ],
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-A",
+      "subject_entity_id": "ENT-CLIENT-A",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "OBSERVADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-alpha"
+      },
+      "source_ids": [
+        "SRC-GENERIC"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-GENERIC"
+        }
+      ],
+      "supporting_evidence_ids": [
+        "EV-GENERIC"
+      ],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    }
+  ]
+}
