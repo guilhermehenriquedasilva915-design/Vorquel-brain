@@ -1,0 +1,125 @@
+{
+  "description": "An older decision left ACTIVE after a newer one replaced it, and a projection listing both. Two decisions claiming to be in force give a consumer no way to choose.",
+  "expect_violation_codes": [
+    "SUPERSEDED_DECISION_STILL_ACTIVE",
+    "SUPERSEDED_DECISION_PRESENTED_AS_ACTIVE"
+  ],
+  "decisions": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Decision",
+      "decision_id": "DEC-OLD",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "title": "synthetic decision DEC-OLD",
+      "decision": "synthetic decision body",
+      "rationale": "synthetic rationale",
+      "status": "ACTIVE",
+      "effective_from": "2026-03-01T12:00:00+00:00",
+      "effective_until": null,
+      "supersedes": null,
+      "superseded_by": "DEC-NEW",
+      "source_ids": [
+        "SRC-1"
+      ],
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "approved_by": "synthetic-reviewer"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Decision",
+      "decision_id": "DEC-NEW",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "title": "synthetic decision DEC-NEW",
+      "decision": "synthetic decision body",
+      "rationale": "synthetic rationale",
+      "status": "ACTIVE",
+      "effective_from": "2026-03-01T12:00:00+00:00",
+      "effective_until": null,
+      "supersedes": "DEC-OLD",
+      "superseded_by": null,
+      "source_ids": [
+        "SRC-1"
+      ],
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "approved_by": "synthetic-reviewer"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Decision",
+      "decision_id": "DEC-RETIRED",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "title": "synthetic decision DEC-RETIRED",
+      "decision": "synthetic decision body",
+      "rationale": "synthetic rationale",
+      "status": "SUPERSEDED",
+      "effective_from": "2026-03-01T12:00:00+00:00",
+      "effective_until": null,
+      "supersedes": null,
+      "superseded_by": "DEC-CURRENT",
+      "source_ids": [
+        "SRC-1"
+      ],
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "approved_by": "synthetic-reviewer"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Decision",
+      "decision_id": "DEC-CURRENT",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "title": "synthetic decision DEC-CURRENT",
+      "decision": "synthetic decision body",
+      "rationale": "synthetic rationale",
+      "status": "ACTIVE",
+      "effective_from": "2026-03-01T12:00:00+00:00",
+      "effective_until": null,
+      "supersedes": "DEC-RETIRED",
+      "superseded_by": null,
+      "source_ids": [
+        "SRC-1"
+      ],
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "approved_by": "synthetic-reviewer"
+    }
+  ],
+  "projections": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "StateProjection",
+      "state_projection_id": "SP-E",
+      "entity_scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "as_of": "2026-03-01T12:00:00+00:00",
+      "summary": "synthetic projection",
+      "active_decision_ids": [
+        "DEC-OLD",
+        "DEC-NEW",
+        "DEC-RETIRED",
+        "DEC-CURRENT"
+      ],
+      "current_claim_ids": [],
+      "open_hypothesis_ids": [],
+      "open_unknown_ids": [],
+      "conflicts": [],
+      "next_best_learning": null,
+      "derived_from_ids": [
+        "SRC-1"
+      ],
+      "freshness_status": "FRESH"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "description": "A measured claim with no source at all. MEDIDO asserts contact with reality; an untraceable measurement is the most expensive kind of wrong thing to keep.",
+  "expect_violation_codes": [
+    "EPISTEMIC_PROVENANCE_REQUIRED"
+  ],
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-F",
+      "subject_entity_id": "ENT-F",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "MEDIDO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "GLOBAL_VORQUEL",
+        "scope_id": "GLOBAL"
+      },
+      "source_ids": [],
+      "provenance": [],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    }
+  ]
+}
