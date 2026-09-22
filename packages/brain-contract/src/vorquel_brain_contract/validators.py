@@ -25,11 +25,13 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .enums import (
+    DATA_CLASSES,
     EPISTEMIC_STATUSES_REQUIRING_PROVENANCE,
     FORBIDDEN_EPISTEMIC_PROMOTIONS,
     FORBIDDEN_FIELD_NAMES,
     NO_EVIDENCE_FOUND,
     SENSITIVITY_FORBIDDEN_IN_CONTEXT_PACK,
+    SENSITIVITY_LEVELS,
 )
 
 ERROR = "ERROR"
@@ -167,61 +169,74 @@ def check_context_pack_excludes_secret(
 
 
 def check_pii_orthogonality(obj: dict[str, Any]) -> list[Violation]:
-    """Carrying ``PII`` neither promotes an object to ``SECRET`` nor weakens its tier.
+    """The two axes must stay on their own axis. Nothing more is inferable here.
 
-    The two axes are independent by decision (DIV-2). This catches the two ways
-    code tends to conflate them: auto-escalating anything with personal data to
-    ``SECRET``, which makes it unusable and unauditable, and treating
-    ``CLIENT_CONFIDENTIAL`` as conditional on whether ``PII`` happens to be
-    present, which makes a client's confidentiality depend on an unrelated fact.
+    DIV-2 separates *how restricted* an object is (``sensitivity_level``, exactly
+    one) from *what kind of data* it carries (``data_classes``, a set). This
+    checks that separation structurally: a tier value must never appear as a data
+    class, and a data class must never appear as a tier.
+
+    It deliberately does **not** treat ``SECRET`` plus ``PII`` as evidence of
+    anything. Co-occurrence is not causation: an object may be ``SECRET`` for a
+    reason that has nothing to do with the personal data it happens to contain,
+    and this validator sees one object frozen in time — no before state, no
+    reason, no actor. Inferring a promotion from that is a guess, and a guess
+    that fires on legitimate data is worse than no rule.
+
+    The real rule — *PII must not by itself cause a promotion to SECRET* — is
+    about a **transition**, so it belongs at the classification boundary where
+    ``before``, ``after``, the reason and the actor are all observable. That is
+    later work, not something to approximate here.
+
+    What is *not* relaxed: a ``SECRET`` object still may never enter a
+    ContextPack. That is a separate rule with a separate check —
+    :func:`check_context_pack_excludes_secret` — and it is untouched. ``SECRET``
+    with ``PII`` is a perfectly representable object in the Brain; it simply
+    cannot be handed to an AI.
     """
+    violations: list[Violation] = []
     sensitivity = obj.get("sensitivity") or {}
     level = obj.get("sensitivity_level") or sensitivity.get("sensitivity_level")
     data_classes = obj.get("data_classes")
     if data_classes is None:
         data_classes = sensitivity.get("data_classes", [])
-    if "PII" not in (data_classes or []):
-        return []
-
     identifier = _any_id(obj)
-    if level == "SECRET" and not obj.get("secret_justification"):
-        return [
+
+    if level is not None and level in DATA_CLASSES:
+        violations.append(
             Violation(
-                code="PII_AUTO_PROMOTED_TO_SECRET",
+                code="SENSITIVITY_AXIS_CONFLATED",
                 message=(
-                    "object carries PII and is marked SECRET with no independent "
-                    "justification; PII is a data class and never by itself a reason "
-                    "to raise the confidentiality tier"
+                    f"{level!r} is a data class and may not be used as a "
+                    "sensitivity_level; the two axes are independent"
                 ),
                 path=identifier,
             )
-        ]
-    return []
+        )
 
-
-def check_client_confidential_unaffected_by_pii(obj: dict[str, Any]) -> list[Violation]:
-    """``CLIENT_CONFIDENTIAL`` holds whether or not ``PII`` is present.
-
-    Stated as an explicit check so the property is asserted rather than assumed:
-    the tier must survive both states of the data-class axis.
-    """
-    sensitivity = obj.get("sensitivity") or {}
-    level = obj.get("sensitivity_level") or sensitivity.get("sensitivity_level")
-    if level != "CLIENT_CONFIDENTIAL":
-        return []
-    data_classes = obj.get("data_classes")
-    if data_classes is None:
-        data_classes = sensitivity.get("data_classes", [])
-    if not isinstance(data_classes, list):
-        return [
+    if data_classes and not isinstance(data_classes, list):
+        violations.append(
             Violation(
                 code="DATA_CLASSES_MALFORMED",
-                message="data_classes must be a list; a CLIENT_CONFIDENTIAL object "
-                "cannot have its tier evaluated against a malformed data-class axis",
-                path=_any_id(obj),
+                message="data_classes must be a list, so that it stays a set of categories",
+                path=identifier,
             )
-        ]
-    return []
+        )
+        return violations
+
+    for data_class in data_classes or []:
+        if data_class in SENSITIVITY_LEVELS:
+            violations.append(
+                Violation(
+                    code="SENSITIVITY_AXIS_CONFLATED",
+                    message=(
+                        f"{data_class!r} is a sensitivity tier and may not be used as a "
+                        "data class; the two axes are independent"
+                    ),
+                    path=identifier,
+                )
+            )
+    return violations
 
 
 # ---------------------------------------------------------------------------
@@ -776,7 +791,6 @@ def validate_graph(
         violations.extend(check_epistemic_provenance(claim))
         violations.extend(check_no_evidence_not_false(claim))
         violations.extend(check_pii_orthogonality(claim))
-        violations.extend(check_client_confidential_unaffected_by_pii(claim))
         violations.extend(check_evidence_supports_claim_scope(claim, evidence_by_id))
         violations.extend(check_no_forbidden_fields(claim, _any_id(claim)))
 

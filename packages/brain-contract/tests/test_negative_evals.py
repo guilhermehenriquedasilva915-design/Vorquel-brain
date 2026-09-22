@@ -69,19 +69,35 @@ def _run(case: dict[str, Any]):
 
 
 @pytest.mark.parametrize("path", _fixture_paths(), ids=lambda p: p.stem)
-def test_fixture_produces_its_declared_violations(path: Path) -> None:
+def test_fixture_produces_exactly_its_declared_violations(path: Path) -> None:
+    """Exact match, not containment.
+
+    Checking only for missing codes would let a fixture that declares nothing
+    pass while quietly producing violations — which is precisely how a control
+    fixture stops controlling anything.
+    """
     case = _load(path)
     report = _run(case)
     expected = set(case["expect_violation_codes"])
 
-    missing = expected - report.codes
-    assert not missing, f"{path.stem}: expected {sorted(missing)} but got {sorted(report.codes)}"
+    assert report.codes == expected, (
+        f"{path.stem}: expected {sorted(expected)}, got {sorted(report.codes)}\n{report}"
+    )
 
 
-def test_clean_baseline_produces_nothing() -> None:
-    """A well-formed graph must validate silently, or the suite proves nothing."""
-    report = _run(_load(FIXTURE_DIR / "z_clean_baseline.json"))
-    assert report.ok, f"clean baseline produced violations:\n{report}"
+@pytest.mark.parametrize(
+    "name",
+    ["z_clean_baseline", "y_pii_is_orthogonal_to_sensitivity"],
+)
+def test_positive_controls_produce_nothing(name: str) -> None:
+    """Graphs that must validate silently, or the suite proves nothing.
+
+    ``z_clean_baseline`` is the general control. ``y_pii_is_orthogonal_to_sensitivity``
+    is the specific one for DIV-2: all five tiers carrying PII, including SECRET,
+    every one of them legitimate.
+    """
+    report = _run(_load(FIXTURE_DIR / f"{name}.json"))
+    assert report.ok, f"{name} produced violations:\n{report}"
 
 
 @pytest.mark.parametrize("path", _fixture_paths(), ids=lambda p: p.stem)
@@ -117,7 +133,7 @@ def test_every_mandatory_case_has_a_fixture() -> None:
     for prefix in required_prefixes:
         assert any(s.startswith(prefix) for s in stems), f"missing fixture for case {prefix!r}"
     assert "z_clean_baseline" in stems
-    assert "y_pii_is_not_secret" in stems
+    assert "y_pii_is_orthogonal_to_sensitivity" in stems
 
 
 def test_validators_never_mutate_their_input() -> None:

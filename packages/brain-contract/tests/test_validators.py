@@ -7,11 +7,13 @@ absence of a field reads as failure rather than as a pass.
 
 from __future__ import annotations
 
+import pytest
+
 from vorquel_brain_contract import (
     CRITICAL,
     NO_EVIDENCE_FOUND,
+    SENSITIVITY_LEVELS,
     check_candidate_is_not_canonical,
-    check_client_confidential_unaffected_by_pii,
     check_context_pack_excludes_secret,
     check_context_pack_provenance,
     check_decision_supersession,
@@ -87,37 +89,61 @@ def test_internal_pack_carrying_a_secret_object_still_fails() -> None:
 # --- PII ------------------------------------------------------------------
 
 
-def test_pii_does_not_imply_secret() -> None:
+@pytest.mark.parametrize("level", SENSITIVITY_LEVELS)
+@pytest.mark.parametrize("classes", [[], ["PII"]], ids=["without-pii", "with-pii"])
+def test_every_tier_is_representable_with_and_without_pii(level: str, classes: list) -> None:
+    """The whole of DIV-2 in one matrix: ten combinations, none of them a violation.
+
+    The axes are independent, so every tier has to survive both states of the
+    data-class axis — including ``SECRET`` with ``PII``, which an earlier version
+    of this validator rejected. It had no way to be satisfied: the escape hatch
+    it demanded was a field the schemas forbid, so a schema-valid object was
+    permanently invalid. Co-occurrence was never evidence of promotion anyway.
+    """
+    obj = {"claim_id": "C", "sensitivity_level": level, "data_classes": classes}
+    assert check_pii_orthogonality(obj) == []
+
+
+def test_secret_with_pii_is_a_representable_object() -> None:
+    """Stated on its own, because this is the case the old rule made impossible.
+
+    An object may be SECRET for a reason that has nothing to do with the personal
+    data it happens to contain. Storing it is fine. What is forbidden is a
+    separate rule with a separate check: it may not enter a ContextPack.
+    """
     obj = {"claim_id": "C", "sensitivity_level": "SECRET", "data_classes": ["PII"]}
-    assert codes(check_pii_orthogonality(obj)) == {"PII_AUTO_PROMOTED_TO_SECRET"}
-
-
-def test_pii_with_an_independent_justification_is_allowed() -> None:
-    obj = {
-        "claim_id": "C",
-        "sensitivity_level": "SECRET",
-        "data_classes": ["PII"],
-        "secret_justification": "contains an access credential, independent of the PII",
-    }
     assert check_pii_orthogonality(obj) == []
 
 
-def test_client_confidential_holds_with_pii() -> None:
-    obj = {"claim_id": "C", "sensitivity_level": "CLIENT_CONFIDENTIAL", "data_classes": ["PII"]}
-    assert check_pii_orthogonality(obj) == []
-    assert check_client_confidential_unaffected_by_pii(obj) == []
+def test_secret_with_pii_still_cannot_enter_a_context_pack() -> None:
+    """Relaxing the orthogonality rule must not relax the ContextPack rule."""
+    pack = {"context_pack_id": "P", "sensitivity_level": "INTERNAL", "claim_ids": ["C"]}
+    objects = {"C": {"sensitivity_level": "SECRET", "data_classes": ["PII"]}}
+    violations = check_context_pack_excludes_secret(pack, objects)
+    assert codes(violations) == {"SECRET_IN_CONTEXT_PACK"}
+    assert violations[0].severity == CRITICAL
 
 
-def test_client_confidential_holds_without_pii() -> None:
-    """The tier must not depend on the unrelated axis, in either state."""
-    obj = {"claim_id": "C", "sensitivity_level": "CLIENT_CONFIDENTIAL", "data_classes": []}
-    assert check_client_confidential_unaffected_by_pii(obj) == []
+def test_a_tier_used_as_a_data_class_is_rejected() -> None:
+    """The axes may not be conflated in either direction."""
+    obj = {"claim_id": "C", "sensitivity_level": "INTERNAL", "data_classes": ["SECRET"]}
+    assert codes(check_pii_orthogonality(obj)) == {"SENSITIVITY_AXIS_CONFLATED"}
 
 
-def test_public_data_may_carry_pii() -> None:
-    """The case a single axis makes unrepresentable."""
-    obj = {"claim_id": "C", "sensitivity_level": "PUBLIC", "data_classes": ["PII"]}
-    assert check_pii_orthogonality(obj) == []
+def test_a_data_class_used_as_a_tier_is_rejected() -> None:
+    obj = {"claim_id": "C", "sensitivity_level": "PII", "data_classes": []}
+    assert codes(check_pii_orthogonality(obj)) == {"SENSITIVITY_AXIS_CONFLATED"}
+
+
+def test_malformed_data_classes_is_rejected() -> None:
+    obj = {"claim_id": "C", "sensitivity_level": "INTERNAL", "data_classes": "PII"}
+    assert codes(check_pii_orthogonality(obj)) == {"DATA_CLASSES_MALFORMED"}
+
+
+def test_nested_sensitivity_block_is_read_too() -> None:
+    """Objects carry sensitivity either flat or under a `sensitivity` key."""
+    obj = {"claim_id": "C", "sensitivity": {"sensitivity_level": "PII", "data_classes": []}}
+    assert codes(check_pii_orthogonality(obj)) == {"SENSITIVITY_AXIS_CONFLATED"}
 
 
 # --- supersession ---------------------------------------------------------

@@ -1,0 +1,197 @@
+{
+  "description": "Positive control for DIV-2. Every sensitivity tier must be representable while carrying PII, including SECRET, so this fixture must produce no violations at all.\n\nAn earlier version of this package rejected SECRET+PII as PII_AUTO_PROMOTED_TO_SECRET unless the object carried a secret_justification field — a field every V1 schema forbids via additionalProperties:false. That made a schema-valid object permanently invalid with no way to satisfy the rule. It was also wrong on its own terms: co-occurrence is not causation, and an object may be SECRET for a reason unrelated to the personal data it happens to contain.\n\nThis fixture checks orthogonality and nothing else. The separate rule that a SECRET object may not enter a ContextPack is unchanged and is covered by g_secret_in_context_pack.",
+  "expect_violation_codes": [],
+  "sources": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Source",
+      "source_id": "SRC-P",
+      "source_type": "DOCUMENT",
+      "title": "synthetic source",
+      "origin": "synthetic://SRC-P",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "captured_at": "2026-03-01T12:00:00+00:00",
+      "ingested_at": "2026-03-01T12:00:00+00:00",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity_level": "CLIENT_CONFIDENTIAL",
+      "data_classes": [
+        "PII"
+      ],
+      "trust_class": "CLIENT_PROVIDED",
+      "instruction_authority": "NONE",
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": "ACTIVE",
+      "metadata": {}
+    }
+  ],
+  "claims": [
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-PII-PUBLIC",
+      "subject_entity_id": "ENT-P",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "DECLARADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity": {
+        "sensitivity_level": "PUBLIC",
+        "data_classes": [
+          "PII"
+        ]
+      },
+      "source_ids": [
+        "SRC-P"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-P"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-PII-INTERNAL",
+      "subject_entity_id": "ENT-P",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "DECLARADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity": {
+        "sensitivity_level": "INTERNAL",
+        "data_classes": [
+          "PII"
+        ]
+      },
+      "source_ids": [
+        "SRC-P"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-P"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-PII-CONFIDENTIAL",
+      "subject_entity_id": "ENT-P",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "DECLARADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity": {
+        "sensitivity_level": "CONFIDENTIAL",
+        "data_classes": [
+          "PII"
+        ]
+      },
+      "source_ids": [
+        "SRC-P"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-P"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-PII-CLIENT_CONFIDENTIAL",
+      "subject_entity_id": "ENT-P",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "DECLARADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity": {
+        "sensitivity_level": "CLIENT_CONFIDENTIAL",
+        "data_classes": [
+          "PII"
+        ]
+      },
+      "source_ids": [
+        "SRC-P"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-P"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    },
+    {
+      "contract_version": "1.0.0",
+      "object_type": "Claim",
+      "claim_id": "CLM-PII-SECRET",
+      "subject_entity_id": "ENT-P",
+      "predicate": "synthetic_predicate",
+      "object_value": "synthetic-value",
+      "epistemic_status": "DECLARADO",
+      "verification_state": "UNREVIEWED",
+      "scope": {
+        "scope_type": "CLIENT",
+        "scope_id": "client-p"
+      },
+      "sensitivity": {
+        "sensitivity_level": "SECRET",
+        "data_classes": [
+          "PII"
+        ]
+      },
+      "source_ids": [
+        "SRC-P"
+      ],
+      "provenance": [
+        {
+          "source_id": "SRC-P"
+        }
+      ],
+      "supporting_evidence_ids": [],
+      "counter_evidence_ids": [],
+      "status": "ACTIVE",
+      "created_at": "2026-03-01T12:00:00+00:00",
+      "last_updated_at": "2026-03-01T12:00:00+00:00"
+    }
+  ]
+}
