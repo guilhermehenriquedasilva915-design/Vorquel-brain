@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/entity.schema.json",
+  "title": "Entity",
+  "description": "A thing the Brain knows about. Aliases are alternative names for this same entity and never create a second one, which is what keeps resolve_entity a disambiguation step rather than a duplication step.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Entity"
+    },
+    "entity_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": [
+        "COMPANY",
+        "PERSON",
+        "PROJECT",
+        "VERTICAL",
+        "PRODUCT",
+        "PROCESS",
+        "SYSTEM",
+        "OFFER",
+        "CLIENT",
+        "PROSPECT",
+        "INTERNAL_UNIT"
+      ]
+    },
+    "canonical_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "sensitivity": {
+      "$ref": "https://schemas.vorquel/brain/shared/sensitivity.schema.json"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "INACTIVE",
+        "MERGED",
+        "ARCHIVED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "entity_id",
+    "entity_type",
+    "canonical_name",
+    "aliases",
+    "scope",
+    "status",
+    "created_at",
+    "last_updated_at"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/context_pack.schema.json",
+  "title": "ContextPack",
+  "description": "What an AI is given for one objective: a read model, assembled for a purpose and never a source of truth. It carries its own version so a pack stays identifiable after it has been copied or logged. SECRET may not appear in it at any budget or in any mode, and provenance_summary is contractually non-droppable: a budget may shorten content, never the ability to trace it.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "ContextPack"
+    },
+    "context_pack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "description": "Version of the ContextPack format itself, carried in the payload rather than inferred from where the file lives.",
+      "type": "string",
+      "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "OPERATIONAL",
+        "RESEARCH",
+        "BUILD",
+        "AUDIT",
+        "STRATEGY"
+      ]
+    },
+    "scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "entity_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state_projection_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "decision_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "hypothesis_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "unknown_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "recent_event_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "claim_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "artifact_refs": {
+      "description": "Pointers to artifacts. A reference only: never a path or command that confers authority to execute anything.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "artifact_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id"
+        ],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "gaps": {
+      "description": "What is missing, stated plainly. A gap is not a negative finding and must never be read as one.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "procedural_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "token_budget": {
+      "description": "Ceiling for the assembled pack. Trimming may drop content; it may not drop provenance_summary.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "sensitivity_level": {
+      "type": "string",
+      "enum": [
+        "PUBLIC",
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "CLIENT_CONFIDENTIAL",
+        "SECRET"
+      ]
+    },
+    "data_classes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "PII"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "provenance_summary": {
+      "description": "One provenance entry per included object that asserts something. Non-droppable under budget pressure.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "object_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "object_type": {
+            "type": "string"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "$ref": "https://schemas.vorquel/brain/shared/provenance.schema.json"
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "object_id",
+          "object_type",
+          "provenance"
+        ],
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "freshness_status": {
+      "type": "string",
+      "enum": [
+        "FRESH",
+        "AGING",
+        "STALE",
+        "UNKNOWN"
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "context_pack_id",
+    "version",
+    "objective",
+    "mode",
+    "scope",
+    "entity_ids",
+    "generated_at",
+    "state_projection_ids",
+    "decision_ids",
+    "evidence_ids",
+    "hypothesis_ids",
+    "unknown_ids",
+    "recent_event_ids",
+    "gaps",
+    "constraints",
+    "token_budget",
+    "sensitivity_level",
+    "data_classes",
+    "provenance_summary"
+  ],
+  "additionalProperties": false
+}

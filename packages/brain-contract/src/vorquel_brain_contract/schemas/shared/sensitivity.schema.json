@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/shared/sensitivity.schema.json",
+  "title": "Sensitivity",
+  "description": "Two independent axes, per DIV-2. sensitivity_level is how restricted the object is and exactly one applies. data_classes is what kind of data it carries and is a set, empty by default. PII lives on the second axis precisely so that public material containing personal data stays representable, and so that carrying PII neither promotes an object to SECRET nor weakens CLIENT_CONFIDENTIAL.",
+  "type": "object",
+  "properties": {
+    "sensitivity_level": {
+      "type": "string",
+      "enum": ["PUBLIC","INTERNAL","CONFIDENTIAL","CLIENT_CONFIDENTIAL","SECRET"]
+    },
+    "data_classes": {
+      "description": "Extensible set of data categories. Empty by default.",
+      "type": "array",
+      "items": { "type": "string", "enum": ["PII"] },
+      "uniqueItems": true,
+      "default": []
+    }
+  },
+  "required": ["sensitivity_level"],
+  "additionalProperties": false
+}

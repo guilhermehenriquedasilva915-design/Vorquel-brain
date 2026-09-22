@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vorquel-brain-contract"
+version = "0.1.0"
+description = "Versioned machine-readable schemas, enums and validators for the Vorquel Brain V1 contract."
+requires-python = ">=3.11"
+# Deliberately empty: the contract is data plus pure functions. jsonschema is a
+# test-time tool for checking fixtures against the published schemas, not a
+# runtime requirement for anything that imports this package.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.11,<1",
+  "jsonschema>=4.21,<5",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+vorquel_brain_contract = ["schemas/shared/*.json", "schemas/v1/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

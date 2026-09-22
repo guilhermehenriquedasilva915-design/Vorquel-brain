@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/source.schema.json",
+  "title": "Source",
+  "description": "Where something came from. A source is an origin, not a truth: a document asserting a fact does not make the fact known, it makes the assertion traceable. instruction_authority defaults to NONE so that text arriving from outside is treated as data rather than as direction.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Source"
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "DOCUMENT",
+        "MESSAGE",
+        "TRANSCRIPT",
+        "WEB_PAGE",
+        "REPOSITORY",
+        "WORKFLOW",
+        "DATASET",
+        "MEDIA",
+        "HUMAN_STATEMENT",
+        "SYSTEM_RECORD"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "origin": {
+      "description": "Where it came from, as a reference. Never an execution instruction.",
+      "type": "string"
+    },
+    "created_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "sensitivity_level": {
+      "type": "string",
+      "enum": [
+        "PUBLIC",
+        "INTERNAL",
+        "CONFIDENTIAL",
+        "CLIENT_CONFIDENTIAL",
+        "SECRET"
+      ]
+    },
+    "data_classes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "PII"
+        ]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "trust_class": {
+      "type": "string",
+      "enum": [
+        "FIRST_PARTY",
+        "CLIENT_PROVIDED",
+        "THIRD_PARTY",
+        "PUBLIC",
+        "UNTRUSTED"
+      ]
+    },
+    "instruction_authority": {
+      "description": "Whether text from this source may steer behaviour. External content is data, never instruction, so NONE is the default.",
+      "type": "string",
+      "enum": [
+        "NONE",
+        "REFERENCE",
+        "POLICY"
+      ],
+      "default": "NONE"
+    },
+    "content_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "SUPERSEDED",
+        "WITHDRAWN",
+        "QUARANTINED"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "source_id",
+    "source_type",
+    "title",
+    "origin",
+    "captured_at",
+    "ingested_at",
+    "scope",
+    "sensitivity_level",
+    "data_classes",
+    "trust_class",
+    "instruction_authority",
+    "status",
+    "metadata"
+  ],
+  "additionalProperties": false
+}

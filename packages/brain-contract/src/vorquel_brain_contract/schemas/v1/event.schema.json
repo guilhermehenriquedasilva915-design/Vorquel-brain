@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/event.schema.json",
+  "title": "Event",
+  "description": "Something that happened, recorded once and never edited. occurred_at and recorded_at are separate fields because the gap between them is itself information, and an append-only log that silently backdates loses it.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Event"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "INGESTION",
+        "REVIEW",
+        "DECISION_MADE",
+        "AGENT_RUN",
+        "BUILD",
+        "OUTCOME_OBSERVED",
+        "CORRECTION"
+      ]
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "agent_run_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "default": {}
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "event_id",
+    "event_type",
+    "entity_scope",
+    "occurred_at",
+    "recorded_at",
+    "actor",
+    "source_ids",
+    "metadata"
+  ],
+  "additionalProperties": false
+}

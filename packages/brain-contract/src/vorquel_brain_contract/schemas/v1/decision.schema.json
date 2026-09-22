@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/decision.schema.json",
+  "title": "Decision",
+  "description": "A choice that has been made and now constrains work. Supersession replaces rather than deletes: the earlier decision stays in the record with status SUPERSEDED, because the history of what was decided and then changed is itself something the Brain must be able to answer.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Decision"
+    },
+    "decision_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "SUPERSEDED",
+        "REVOKED"
+      ]
+    },
+    "effective_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "effective_until": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "superseded_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "decision_id",
+    "scope",
+    "title",
+    "decision",
+    "status",
+    "effective_from",
+    "source_ids",
+    "created_at"
+  ],
+  "additionalProperties": false
+}

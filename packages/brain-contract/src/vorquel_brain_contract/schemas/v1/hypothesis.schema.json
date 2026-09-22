@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.vorquel/brain/v1/hypothesis.schema.json",
+  "title": "Hypothesis",
+  "description": "Something believed but not established. falsification_criteria is required because a hypothesis that cannot be wrong is not a hypothesis, and the OPEN and CONFLICTING statuses additionally require next_best_learning so a live question always carries the thing that would move it.",
+  "allOf": [
+    {
+      "$ref": "https://schemas.vorquel/brain/shared/envelope.schema.json"
+    }
+  ],
+  "type": "object",
+  "properties": {
+    "contract_version": {
+      "type": "string"
+    },
+    "object_type": {
+      "const": "Hypothesis"
+    },
+    "hypothesis_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entity_scope": {
+      "$ref": "https://schemas.vorquel/brain/shared/scope.schema.json"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "PARTIALLY_SUPPORTED",
+        "CONFLICTING",
+        "INVALIDATED",
+        "SUPPORTED",
+        "ARCHIVED"
+      ]
+    },
+    "supporting_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "counter_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "falsification_criteria": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_best_learning": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "contract_version",
+    "object_type",
+    "hypothesis_id",
+    "entity_scope",
+    "statement",
+    "status",
+    "supporting_evidence_ids",
+    "counter_evidence_ids",
+    "falsification_criteria",
+    "created_at",
+    "last_updated_at"
+  ],
+  "additionalProperties": false
+}
