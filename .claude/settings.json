@@ -11,18 +11,36 @@
       "Bash(yarn add:*)",
       "Bash(psql:*)",
       "Bash(git push --force:*)",
-      "Bash(git push:*)",
-      "mcp__n8n__delete_workflow",
+
+      "mcp__n8n__unpublish_workflow",
+      "mcp__n8n__archive_workflow",
+      "mcp__n8n__restore_workflow_version",
+      "mcp__n8n__explore_node_resources",
+
+      "mcp__n8n__create_data_table",
+      "mcp__n8n__rename_data_table",
+      "mcp__n8n__add_data_table_column",
+      "mcp__n8n__rename_data_table_column",
+      "mcp__n8n__delete_data_table_column",
+      "mcp__n8n__add_data_table_rows",
+
+      "mcp__n8n__publish_workflow",
       "mcp__n8n__activate_workflow",
       "mcp__n8n__deactivate_workflow",
-      "mcp__n8n__publish_workflow",
       "mcp__n8n__execute_workflow",
       "mcp__n8n__run_workflow",
+      "mcp__n8n__delete_workflow",
+      "mcp__n8n__delete_data_table",
+      "mcp__n8n__delete_data_table_rows",
+      "mcp__n8n__update_data_table_rows",
       "mcp__n8n__create_credential",
       "mcp__n8n__update_credential",
       "mcp__n8n__delete_credential",
       "mcp__n8n__install_community_node",
       "mcp__n8n__delete_execution",
+      "mcp__n8n__create_agent",
+      "mcp__n8n__publish_agent",
+
       "mcp__claude_ai_Supabase__apply_migration",
       "mcp__claude_ai_Supabase__deploy_edge_function",
       "mcp__claude_ai_Supabase__create_project",
@@ -31,35 +49,69 @@
       "mcp__claude_ai_Supabase__pause_project",
       "mcp__claude_ai_Supabase__restore_project"
     ],
+
     "ask": [
       "Bash(git commit:*)",
       "mcp__claude_ai_Supabase__execute_sql",
-      "mcp__n8n__create_workflow",
+
+      "mcp__n8n__prepare_workflow_pin_data",
+      "mcp__n8n__create_workflow_from_code",
       "mcp__n8n__update_workflow",
       "mcp__n8n__test_workflow"
     ],
+
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
       "Bash(git add:*)",
+      "Bash(git push:*)",
+
+      "Bash(gh auth status:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr edit:*)",
+      "Bash(gh pr status:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh run view:*)",
+
       "Bash(python -m pytest:*)",
       "Bash(python -m ruff:*)",
+      "Bash(ruff:*)",
+
       "Bash(vorquel-brain-doctor:*)",
       "Bash(vorquel-brain-retrieve:*)",
       "Bash(vorquel-n8n-analyze:*)",
+
       "mcp__claude_ai_Supabase__list_projects",
       "mcp__claude_ai_Supabase__list_tables",
       "mcp__claude_ai_Supabase__list_migrations",
       "mcp__claude_ai_Supabase__get_advisors",
-      "mcp__n8n__get_workflow",
-      "mcp__n8n__list_workflows",
+
+      "mcp__n8n__search_workflows",
+      "mcp__n8n__get_workflow_details",
+      "mcp__n8n__get_workflow_history",
+      "mcp__n8n__get_workflow_version",
+      "mcp__n8n__get_workflow_versions_diff",
+      "mcp__n8n__get_workflow_sdk_reference",
+      "mcp__n8n__get_workflow_best_practices",
       "mcp__n8n__search_nodes",
-      "mcp__n8n__get_node_type",
+      "mcp__n8n__get_node_types",
       "mcp__n8n__validate_workflow",
-      "mcp__n8n__get_execution",
-      "mcp__n8n__list_executions"
+      "mcp__n8n__validate_node_config",
+      "mcp__n8n__list_credentials",
+      "mcp__n8n__search_projects",
+      "mcp__n8n__list_workflow_tags",
+      "mcp__n8n__list_n8n_gateway_services",
+      "mcp__n8n__get_workflow_execution",
+      "mcp__n8n__search_workflow_executions",
+      "mcp__n8n__search_data_tables",
+      "mcp__n8n__get_data_table_rows"
     ]
   }
 }

@@ -24,6 +24,15 @@ from .db import (
     function_exists,
     read_only_connection,
 )
+from .environment_profile import (
+    MAX_PROFILE_AGE_DAYS,
+    ProfileError,
+    audit_tool_policy,
+    dead_deny_rules,
+    load_profile,
+    observed_tools,
+    profile_age_days,
+)
 
 
 class Status(StrEnum):
@@ -76,7 +85,7 @@ class DoctorReport:
         return "\n".join(lines)
 
 
-def _check_claude(report: DoctorReport, repo_root: Path) -> None:
+def _check_claude(report: DoctorReport, repo_root: Path) -> dict[str, Any]:
     skill = repo_root / ".claude" / "skills" / "n8n-brain" / "SKILL.md"
     if skill.is_file():
         refs = sorted((skill.parent / "references").glob("*.md"))
@@ -94,7 +103,7 @@ def _check_claude(report: DoctorReport, repo_root: Path) -> None:
             data = json.loads(settings.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             report.add("claude.permissions", Status.BLOCKED, f"settings.json invalido: {exc.msg}")
-            return
+            return {}
         perms = data.get("permissions") or {}
         deny = perms.get("deny") or []
         if deny:
@@ -109,12 +118,14 @@ def _check_claude(report: DoctorReport, repo_root: Path) -> None:
                 Status.READY_WITH_LIMITS,
                 "settings.json sem denylist: tools de producao nao estao bloqueadas",
             )
+        return perms
     else:
         report.add(
             "claude.permissions",
             Status.BLOCKED,
             ".claude/settings.json ausente: nenhuma allow/denylist real de MCP",
         )
+    return {}
 
 
 def _check_knowledge(report: DoctorReport) -> None:
@@ -214,7 +225,7 @@ def _port_open(host: str, port: int, timeout: float = 1.5) -> bool:
         return False
 
 
-def _check_n8n(report: DoctorReport) -> None:
+def _check_n8n(report: DoctorReport, permissions: dict[str, Any]) -> None:
     base = os.environ.get("N8N_BASE_URL")
     if not base:
         report.add(
@@ -249,19 +260,148 @@ def _check_n8n(report: DoctorReport) -> None:
             "N8N_ENVIRONMENT nao declarado: assume-se nao-DEV e bloqueia mutacao",
         )
 
+    profile, profile_error = _load_profile_safely()
+    tools = observed_tools(profile) if profile else []
+
+    _check_n8n_mcp(report, tools, configured=_mcp_server_configured())
+    _check_n8n_deny_rules(report, tools, permissions)
+    _check_n8n_profile(report, profile, profile_error)
+
+
+def _load_profile_safely() -> tuple[dict[str, Any] | None, str | None]:
+    try:
+        return load_profile(), None
+    except ProfileError as exc:
+        return None, str(exc)
+
+
+def _mcp_server_configured() -> bool:
+    """Is an n8n MCP server registered with Claude Code on this machine?
+
+    Read as a fact from the client's own config. A profile can go stale; this
+    cannot say more than "a server by that name is configured".
+    """
+    config = Path.home() / ".claude.json"
+    if not config.is_file():
+        return False
+    try:
+        data = json.loads(config.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+
+    def _has_n8n(servers: Any) -> bool:
+        return isinstance(servers, dict) and any(
+            "n8n" in str(name).lower() for name in servers
+        )
+
+    if _has_n8n(data.get("mcpServers")):
+        return True
+    projects = data.get("projects")
+    if isinstance(projects, dict):
+        return any(
+            _has_n8n(entry.get("mcpServers"))
+            for entry in projects.values()
+            if isinstance(entry, dict)
+        )
+    return False
+
+
+def _check_n8n_mcp(report: DoctorReport, tools: list[str], *, configured: bool) -> None:
+    if tools:
+        report.add(
+            "n8n.mcp",
+            Status.READY,
+            f"{len(tools)} tools reais enumeradas e registradas no profile",
+        )
+    elif configured:
+        report.add(
+            "n8n.mcp",
+            Status.READY_WITH_LIMITS,
+            "MCP n8n configurado, mas superficie nunca enumerada: rode vorquel-n8n-profile",
+        )
+    else:
+        report.add(
+            "n8n.mcp",
+            Status.BLOCKED,
+            "nenhum MCP n8n configurado: build/test/debug indisponiveis",
+        )
+
+
+def _check_n8n_deny_rules(
+    report: DoctorReport, tools: list[str], permissions: dict[str, Any]
+) -> None:
+    if not permissions:
+        report.add(
+            "n8n.deny_rules",
+            Status.BLOCKED,
+            "sem permissions em settings.json: nada esta bloqueado",
+        )
+        return
+    if not tools:
+        # Refusing to grade a denylist against a surface nobody observed is the
+        # whole point: an unverified rule is not protection.
+        report.add(
+            "n8n.deny_rules",
+            Status.READY_WITH_LIMITS,
+            "superficie real desconhecida: denylist nao verificavel",
+        )
+        return
+
+    findings = audit_tool_policy(tools, permissions)
+    dead = dead_deny_rules(tools, permissions)
+    if findings:
+        report.add(
+            "n8n.deny_rules",
+            Status.BLOCKED,
+            f"{len(findings)} divergencia(s) real(is): {findings[0]}",
+        )
+        return
+    detail = f"{len(tools)} tools cobertas, nenhuma sem regra"
+    if dead:
+        detail += f"; {len(dead)} regra(s) deny sem tool correspondente (guarda futura)"
+    report.add("n8n.deny_rules", Status.READY, detail)
+
+
+def _check_n8n_profile(
+    report: DoctorReport, profile: dict[str, Any] | None, error: str | None
+) -> None:
+    if error:
+        report.add("n8n.environment_profile", Status.BLOCKED, error)
+        return
+    if profile is None:
+        report.add(
+            "n8n.environment_profile",
+            Status.BLOCKED,
+            "N8N_ENVIRONMENT_PROFILE ausente: planejamento sem referencia da instancia",
+        )
+        return
+    env = str(profile.get("environment", "")).upper()
+    if env != "DEV":
+        report.add(
+            "n8n.environment_profile",
+            Status.BLOCKED,
+            f"profile declara environment={env or 'desconhecido'}: mutacao so e permitida em DEV",
+        )
+        return
+    age = profile_age_days(profile)
+    if age is None:
+        report.add(
+            "n8n.environment_profile",
+            Status.READY_WITH_LIMITS,
+            "profile sem checked_at valido: idade desconhecida",
+        )
+        return
+    if age > MAX_PROFILE_AGE_DAYS:
+        report.add(
+            "n8n.environment_profile",
+            Status.READY_WITH_LIMITS,
+            f"profile observado ha {age:.0f} dias: reconfirme a instancia",
+        )
+        return
     report.add(
-        "n8n.mcp",
-        Status.BLOCKED,
-        "nenhum MCP n8n configurado: build/test/debug indisponiveis",
-    )
-    # The deny rules for n8n in .claude/settings.json were written before any
-    # n8n MCP existed, so their tool names are unverified. Saying "production is
-    # denied" on the strength of a rule that may match nothing is worse than
-    # saying nothing.
-    report.add(
-        "n8n.deny_rules",
-        Status.READY_WITH_LIMITS,
-        "regras mcp__n8n__* sao placeholders: confirmar nomes reais ao configurar o MCP",
+        "n8n.environment_profile",
+        Status.READY,
+        f"DEV, n8n {profile.get('n8n_version', '?')}, observado ha {age:.1f} dia(s)",
     )
 
 
@@ -288,8 +428,8 @@ def _check_watch(report: DoctorReport, watch_root: Path | None) -> None:
 
 def run_doctor(repo_root: Path, watch_root: Path | None = None) -> DoctorReport:
     report = DoctorReport()
-    _check_claude(report, repo_root)
+    permissions = _check_claude(report, repo_root)
     _check_knowledge(report)
     _check_watch(report, watch_root)
-    _check_n8n(report)
+    _check_n8n(report, permissions)
     return report
