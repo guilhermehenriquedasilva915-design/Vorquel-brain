@@ -271,6 +271,7 @@ jobs:
           psql -f supabase/tests/simulate_supabase_createrole_membership.sql
           psql -f supabase/migrations/20260918_003_n8n_brain_writer_postgres_membership_v01.sql
           psql -f supabase/migrations/20260920_004_n8n_brain_experience_and_runs_v01.sql
+          psql -f supabase/migrations/20260920_005_fix_touch_build_run_search_path.sql
       - name: Validate security and invariants
         run: |
           psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql

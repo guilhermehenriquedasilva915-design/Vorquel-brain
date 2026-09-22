@@ -136,3 +136,22 @@ end $$;
 -- Leave the disposable database clean for any job that reuses it.
 delete from n8n_brain.build_runs where run_id = 'run_budget_probe';
 delete from n8n_brain.operational_experiences where experience_id = 'exp_baseline_ok';
+
+-- The trigger helper must resolve objects through a fixed search_path.
+do $$
+declare
+  v_config text[];
+begin
+  select p.proconfig into v_config
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'n8n_brain'
+    and p.proname = 'touch_build_run';
+
+  if v_config is null or not exists (
+    select 1 from unnest(v_config) x
+    where x = 'search_path=pg_catalog, n8n_brain'
+  ) then
+    raise exception 'touch_build_run must pin search_path to pg_catalog, n8n_brain';
+  end if;
+end $$;
