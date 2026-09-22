@@ -1,0 +1,51 @@
+{
+  "name": "vorquel-safe-test-minimal",
+  "nodes": [
+    {
+      "id": "b1a1f0c0-0000-4000-8000-000000000001",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "b1a1f0c0-0000-4000-8000-000000000002",
+      "name": "Seed Values",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {"id": "a", "name": "a", "type": "number", "value": 21},
+            {"id": "b", "name": "b", "type": "number", "value": 2}
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b1a1f0c0-0000-4000-8000-000000000003",
+      "name": "Compute Product",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 0],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {"id": "p", "name": "product", "type": "number", "value": "={{ $json.a * $json.b }}"}
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {"main": [[{"node": "Seed Values", "type": "main", "index": 0}]]},
+    "Seed Values": {"main": [[{"node": "Compute Product", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}
