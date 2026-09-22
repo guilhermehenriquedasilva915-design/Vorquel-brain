@@ -281,7 +281,12 @@ EVENT_TYPES: Final[tuple[str, ...]] = (
     "CORRECTION",
 )
 
-FRESHNESS_STATUSES: Final[tuple[str, ...]] = ("FRESH", "AGING", "STALE", "UNKNOWN")
+#: Freshness, exactly as the canonical BRAIN CONTRACT V1 defines it. An earlier
+#: draft of this package invented AGING and shortened UNKNOWN_FRESHNESS to
+#: UNKNOWN; neither was an approved contract change, and both are gone. A
+#: machine-readable alias is not offered on purpose — an alias is how a
+#: vocabulary quietly acquires a second spelling.
+FRESHNESS_STATUSES: Final[tuple[str, ...]] = ("FRESH", "STALE", "UNKNOWN_FRESHNESS")
 
 CONTEXT_PACK_MODES: Final[tuple[str, ...]] = (
     "OPERATIONAL",

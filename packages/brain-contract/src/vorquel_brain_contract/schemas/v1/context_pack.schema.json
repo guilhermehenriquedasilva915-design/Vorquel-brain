@@ -207,10 +207,10 @@
       "type": "string",
       "enum": [
         "FRESH",
-        "AGING",
         "STALE",
-        "UNKNOWN"
-      ]
+        "UNKNOWN_FRESHNESS"
+      ],
+      "description": "Whether the derived picture can still be relied on. Pinned to the canonical BRAIN CONTRACT V1 vocabulary: FRESH, STALE, UNKNOWN_FRESHNESS. Staleness is stated rather than guessed, and UNKNOWN_FRESHNESS is a real answer meaning nobody has established how old this is."
     }
   },
   "required": [

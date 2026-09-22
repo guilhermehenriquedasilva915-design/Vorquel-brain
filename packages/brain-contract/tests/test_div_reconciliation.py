@@ -18,6 +18,7 @@ from vorquel_brain_contract import (
     DATA_CLASSES,
     EPISTEMIC_STATUS_DISPLAY,
     EPISTEMIC_STATUSES,
+    FRESHNESS_STATUSES,
     LEGACY_STORAGE_SCOPE_TYPES,
     SCOPE_TYPES,
     SCOPES_AWAITING_STORAGE_MIGRATION,
@@ -172,6 +173,59 @@ def test_epistemic_enum_matches_the_live_migration() -> None:
     sql = migration.read_text(encoding="utf-8")
     for status in EPISTEMIC_STATUSES:
         assert f"'{status}'" in sql, f"{status} is not in the live epistemic constraint"
+
+
+# --- freshness -------------------------------------------------------------
+#
+# Not one of DIV-1..4. An earlier version of this package invented AGING and
+# shortened UNKNOWN_FRESHNESS to UNKNOWN, which was an unapproved widening of a
+# canonical vocabulary. These tests pin the contract's three values so the same
+# drift cannot recur silently.
+
+
+def test_freshness_matches_the_canonical_contract() -> None:
+    assert FRESHNESS_STATUSES == ("FRESH", "STALE", "UNKNOWN_FRESHNESS")
+
+
+def test_state_projection_freshness_enum_is_exactly_the_contract() -> None:
+    schema = load_all_schemas()[
+        "https://schemas.vorquel/brain/v1/state_projection.schema.json"
+    ]
+    assert schema["properties"]["freshness_status"]["enum"] == list(FRESHNESS_STATUSES)
+
+
+def test_context_pack_freshness_enum_is_exactly_the_contract() -> None:
+    schema = load_all_schemas()["https://schemas.vorquel/brain/v1/context_pack.schema.json"]
+    assert schema["properties"]["freshness_status"]["enum"] == list(FRESHNESS_STATUSES)
+
+
+def test_the_withdrawn_freshness_values_are_gone() -> None:
+    """AGING and a bare UNKNOWN must not survive anywhere in the freshness axis.
+
+    ``UNKNOWN`` is checked only against the freshness enums, not the whole
+    schema set: it is a legitimate ``CANDIDATE_TYPES`` value, meaning a candidate
+    that proposes an Unknown object, and that is unrelated to staleness.
+    """
+    assert "AGING" not in FRESHNESS_STATUSES
+    assert "UNKNOWN" not in FRESHNESS_STATUSES
+
+    blob = json.dumps(load_all_schemas())
+    assert "AGING" not in blob, "AGING is still present in a schema"
+
+    for uri, schema in load_all_schemas().items():
+        freshness = schema.get("properties", {}).get("freshness_status")
+        if freshness is None:
+            continue
+        assert "AGING" not in freshness["enum"], uri
+        assert "UNKNOWN" not in freshness["enum"], uri
+
+
+def test_no_machine_readable_freshness_alias_exists() -> None:
+    """A second spelling is how a pinned vocabulary quietly comes unpinned."""
+    import vorquel_brain_contract as contract
+
+    assert not hasattr(contract, "FRESHNESS_STATUS_DISPLAY")
+    assert not hasattr(contract, "FRESHNESS_ALIASES")
 
 
 def test_verification_state_is_a_separate_axis() -> None:
