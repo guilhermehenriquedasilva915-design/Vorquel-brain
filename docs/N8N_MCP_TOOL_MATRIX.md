@@ -42,7 +42,7 @@ them separately as *guarda futura*.
 | `search_workflow_executions` | execution list | R | none | yes | **allow** |
 | `search_data_tables` | data table list | R | none | yes | **allow** |
 | `get_data_table_rows` | data table contents | R | none | yes (instance is empty) | **allow** |
-| `prepare_workflow_pin_data` | generate pin data | R→ | unverified whether it touches anything to sample data | unproven | **ask** |
+| `prepare_workflow_pin_data` | generate pin data | R | **verified 2026-09-21**: no execution was created and nothing was mutated by the call | yes | **ask** |
 | `create_workflow_from_code` | create workflow | W | creates a workflow; may auto-assign credentials | yes, with guard | **ask** |
 | `update_workflow` | mutate workflow | W | `setNodeCredential` can bind a credential by argument | yes, with guard | **ask** |
 | `test_workflow` | run with pin data | **X** | **executes unpinned nodes for real** | no — see below | **ask** |
@@ -85,6 +85,20 @@ preconditions, not a safe playground:
 
 `Execute Command` — BLOCKED. SSH — BLOCKED. Filesystem — BLOCKED by default.
 `Code` — REVIEW_REQUIRED. Community/custom nodes — REVIEW_REQUIRED.
+
+#### What step 7 may not demand
+
+Proven on the DEV instance 2026-09-21, building the SAFE TEST fixture for real:
+`prepare_workflow_pin_data` returned `nodeSchemasToGenerate: {}` and put the
+manual trigger under `nodesWithoutSchema`, with `withSchemaFromExecution: 0`
+and `withSchemaFromDefinition: 0`. **Trigger pin data can only come from a
+previous execution**, so on a workflow's first build there is none.
+
+Requiring every trigger to be pinned therefore deadlocks step 7 permanently on
+any first run. `n8n-nodes-base.manualTrigger` is exempt — it is the one trigger
+with no source to arm, emitting a single empty item when a human clicks run.
+The exemption is one frozenset member (`UNPINNABLE_TRIGGER_TYPES`) and every
+other trigger still has to be proven pinned.
 
 ### `explore_node_resources` reaches outside
 

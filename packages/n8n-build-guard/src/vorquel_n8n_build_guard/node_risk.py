@@ -81,6 +81,20 @@ CODE_TYPES = frozenset(
 #: Reaches the network. Harmless to the host, never harmless to a third party.
 HTTP_TYPES = frozenset({"n8n-nodes-base.httpRequest", "n8n-nodes-base.webhook"})
 
+#: Triggers that have no source to arm. A trigger normally has to be pinned
+#: because executing it would fire against something live, but the manual
+#: trigger has nothing behind it: it emits one empty item when a human clicks
+#: run. There is no schedule to arm, no socket to open and no third party to
+#: call, so it is the one trigger that needs no pin data.
+#:
+#: This is not a convenience. ``prepare_workflow_pin_data`` cannot produce a
+#: schema for it at all — on the DEV instance it came back under
+#: ``nodesWithoutSchema`` with ``withSchemaFromExecution: 0`` and
+#: ``withSchemaFromDefinition: 0``, because the only source of trigger pin data
+#: is a previous execution and a first build has none. Requiring it made the
+#: gate unsatisfiable on every workflow's first run.
+UNPINNABLE_TRIGGER_TYPES = frozenset({"n8n-nodes-base.manualTrigger"})
+
 #: Prefixes that ship with n8n itself. Anything else is community or custom
 #: code whose side effects were never reviewed here.
 FIRST_PARTY_PREFIXES = ("n8n-nodes-base.", "@n8n/n8n-nodes-langchain.", "n8n-nodes-langchain.")
@@ -123,14 +137,15 @@ def _pinning_requirement(node_type: str, node: dict[str, Any]) -> str | None:
     """Why this node must be pinned, or ``None`` if it need not be.
 
     Mirrors the three categories the schema says pin data covers, so that the
-    gate checks the same set the server claims to handle.
+    gate checks the same set the server claims to handle — less
+    :data:`UNPINNABLE_TRIGGER_TYPES`, which the server reports it cannot cover.
     """
     if node_type in HTTP_TYPES:
         return "reaches the network — would call a third party for real"
     credentials = node.get("credentials")
     if isinstance(credentials, dict) and credentials:
         return "carries a credential — would authenticate to a third party for real"
-    if _is_trigger(node_type):
+    if _is_trigger(node_type) and node_type not in UNPINNABLE_TRIGGER_TYPES:
         return "is a trigger — would arm or fire against a live source"
     return None
 

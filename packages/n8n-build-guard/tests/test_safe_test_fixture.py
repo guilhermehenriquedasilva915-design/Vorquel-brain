@@ -45,9 +45,16 @@ def test_no_node_endangers_the_host(risks) -> None:
     assert [r.verdict for r in risks] == [ALLOWED] * len(risks)
 
 
-def test_only_the_trigger_reaches_outside(risks) -> None:
-    """Precondition 7 has exactly one node to prove, and it is the trigger."""
-    assert [r.node_name for r in nodes_requiring_pinning(risks)] == ["Manual Trigger"]
+def test_nothing_in_the_fixture_reaches_outside(risks) -> None:
+    """Precondition 7 has nothing to prove here, and that is the point.
+
+    The manual trigger is the one trigger with no source to arm, so it needs no
+    pin data — see ``UNPINNABLE_TRIGGER_TYPES``. Everything else in the fixture
+    is a Set node. The fixture therefore reaches outside the execution at no
+    point at all.
+    """
+    assert nodes_requiring_pinning(risks) == []
+    assert all(not r.requires_pinning for r in risks)
 
 
 def test_fixture_declares_no_credentials(workflow: dict) -> None:
@@ -91,7 +98,10 @@ def test_gate_proceeds_once_the_server_evidence_exists(risks, workflow: dict) ->
             analyzer_risk_decision="SAFE_FOR_LEARNING",
             node_risks=risks,
             pin_data_prepared=True,
-            pinned_node_names={"Manual Trigger"},
+            # What the DEV instance really returned: prepare_workflow_pin_data
+            # generated no schema for any node. The earlier version of this test
+            # assumed {"Manual Trigger"} and the live run refuted it.
+            pinned_node_names=set(),
             declared_node_count=len(workflow["nodes"]),
         )
     )
@@ -100,19 +110,28 @@ def test_gate_proceeds_once_the_server_evidence_exists(risks, workflow: dict) ->
     assert not decision.unpinned_privileged_nodes
 
 
-def test_unpinned_trigger_is_refused(risks, workflow: dict) -> None:
-    """If pin data missed the trigger, precondition 7 must catch it."""
+def test_a_real_privileged_node_is_still_refused_when_unpinned(risks, workflow: dict) -> None:
+    """The carve-out is for the manual trigger alone, not for triggers at all.
+
+    Adding a schedule trigger — which does arm against a live source — puts
+    precondition 7 back in play, and an empty pinned set must still refuse.
+    """
+    armed = classify_workflow(
+        {"nodes": [{"name": "Every Hour", "type": "n8n-nodes-base.scheduleTrigger"}]}
+    )
+    assert [r.node_name for r in nodes_requiring_pinning(armed)] == ["Every Hour"]
+
     decision = evaluate(
         SafeTestEvidence(
             deterministic_validation_passed=True,
             validate_workflow_passed=True,
             analyzer_risk_decision="SAFE_FOR_LEARNING",
-            node_risks=risks,
+            node_risks=risks + armed,
             pin_data_prepared=True,
             pinned_node_names=set(),
-            declared_node_count=len(workflow["nodes"]),
+            declared_node_count=len(workflow["nodes"]) + 1,
         )
     )
     assert decision.decision == REFUSE
     assert decision.failed_precondition == "privileged_nodes_pinned"
-    assert decision.unpinned_privileged_nodes == ["Manual Trigger"]
+    assert decision.unpinned_privileged_nodes == ["Every Hour"]
