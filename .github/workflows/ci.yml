@@ -904,15 +904,23 @@ jobs:
           assert violations and violations[0].severity == 'CRITICAL', violations
           print('absence-as-false ->', violations[0].code)
           "
-      - name: This package ships no migration
+      - name: No unreviewed migration appears
         run: |
           set -euo pipefail
-          # Brain-V1-A is schema-only. The live four-scope constraint stands
-          # until Brain-V1-B plans the migration with backward compatibility.
+          # Brain-V1-A shipped no migration and this step asserted the count was
+          # five. Brain-V1-B added exactly one -- 20260922_006, the migration
+          # DIV-3 deferred to it -- so the expected count is six.
+          #
+          # The gate is unchanged in force: a seventh file still fails here, and
+          # the set is pinned by name in
+          # tests/test_div_reconciliation.py::test_no_unreviewed_migration_appears
+          # so a migration cannot land unreviewed by being renamed into the
+          # count.
           cd "$GITHUB_WORKSPACE"
           count=$(find supabase/migrations -name '*.sql' | wc -l)
-          if [ "$count" -ne 5 ]; then
-            echo "expected 5 migrations, found $count" >&2
+          if [ "$count" -ne 6 ]; then
+            echo "expected 6 migrations, found $count" >&2
+            find supabase/migrations -name '*.sql' | sort >&2
             exit 1
           fi
-          echo "migration count unchanged: $count"
+          echo "migration count as reviewed: $count"
