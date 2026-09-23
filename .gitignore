@@ -11,3 +11,6 @@ corpus/
 .env
 .env.*
 !.env.example
+
+# Local virtualenvs created while developing a package
+packages/*/.venv/
