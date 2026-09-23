@@ -23,6 +23,7 @@ from vorquel_brain_contract import (
     SCOPE_TYPES,
     SCOPES_AWAITING_STORAGE_MIGRATION,
     SENSITIVITY_LEVELS,
+    STORAGE_SCOPE_TYPES,
     VERIFICATION_STATES,
     display_epistemic_status,
     load_all_schemas,
@@ -107,19 +108,45 @@ def test_company_is_not_a_scope() -> None:
     assert "COMPANY" in entity["properties"]["entity_type"]["enum"]
 
 
-def test_storage_still_accepts_only_four_scopes() -> None:
-    """The contract is deliberately ahead of storage until Brain-V1-B.
+def test_the_storage_gap_is_closed() -> None:
+    """DIV-3's recorded gap was closed by Brain-V1-B, and stays closed.
 
-    This is not a defect being tolerated quietly — it is a recorded gap, and
-    this test is what keeps it recorded. Nothing may assume storage accepts
-    VERTICAL or ENTITY before the migration lands.
+    Brain-V1-A shipped with the contract deliberately two values ahead of
+    storage, and an earlier version of this test asserted that gap was open —
+    which is what kept it recorded rather than forgotten. ``20260922_006``
+    closed it. The test is not deleted along with the gap: it now asserts the
+    opposite, so a future migration that narrowed storage again would fail here
+    instead of silently reopening a divergence this project already paid to find
+    once.
     """
+    assert set(STORAGE_SCOPE_TYPES) == set(SCOPE_TYPES)
+    assert SCOPES_AWAITING_STORAGE_MIGRATION == ()
+    # The pre-migration set is kept as history, and is still what it was.
     assert len(LEGACY_STORAGE_SCOPE_TYPES) == 4
-    assert set(SCOPES_AWAITING_STORAGE_MIGRATION) == {"VERTICAL", "ENTITY"}
+    assert set(SCOPE_TYPES) - set(LEGACY_STORAGE_SCOPE_TYPES) == {"VERTICAL", "ENTITY"}
 
 
-def test_legacy_storage_constraint_matches_the_live_migration() -> None:
+def test_the_live_storage_constraint_matches_the_contract() -> None:
     """Read the actual SQL, so this claim cannot rot into a comment."""
+    migration = (
+        REPO_ROOT
+        / "supabase"
+        / "migrations"
+        / "20260922_006_brain_scope_vertical_entity_v01.sql"
+    )
+    sql = migration.read_text(encoding="utf-8")
+    for scope in SCOPE_TYPES:
+        assert f"'{scope}'" in sql, f"{scope} is not in the live scope constraint"
+    assert "'COMPANY'" not in sql, "COMPANY became a scope"
+
+
+def test_the_pre_migration_constraint_is_still_on_record() -> None:
+    """The four-value constraint Brain-V1-A was written against is unchanged.
+
+    ``20260922_006`` widens by replacing a constraint, not by editing ``004``.
+    If ``004`` were rewritten in place, the migration history would no longer
+    describe how the database actually got here.
+    """
     migration = (
         REPO_ROOT
         / "supabase"
@@ -128,11 +155,17 @@ def test_legacy_storage_constraint_matches_the_live_migration() -> None:
     )
     sql = migration.read_text(encoding="utf-8")
     expected = "check (scope_type in ('GLOBAL_VORQUEL','CLIENT','PROJECT','PRIVATE_TEST'))"
-    assert expected in sql, "the live scope constraint changed; DIV-3's recorded gap is stale"
+    assert expected in sql, "migration 004 was edited in place instead of being superseded"
 
 
-def test_this_pr_creates_no_migration() -> None:
-    """Brain-V1-A is schema-only. A new migration file here would be out of scope."""
+def test_no_unreviewed_migration_appears() -> None:
+    """The migration set is pinned, so a new one cannot land unnoticed.
+
+    Brain-V1-A asserted this set had five members and that it added none. It now
+    has six: ``20260922_006`` is the migration DIV-3 deferred to Brain-V1-B, and
+    it is named here because it was reviewed. The gate itself is unchanged — an
+    unexpected seventh file still fails.
+    """
     migrations = sorted((REPO_ROOT / "supabase" / "migrations").glob("*.sql"))
     names = {m.name for m in migrations}
     assert names == {
@@ -141,6 +174,7 @@ def test_this_pr_creates_no_migration() -> None:
         "20260918_003_n8n_brain_writer_postgres_membership_v01.sql",
         "20260920_004_n8n_brain_experience_and_runs_v01.sql",
         "20260920_005_fix_touch_build_run_search_path.sql",
+        "20260922_006_brain_scope_vertical_entity_v01.sql",
     }, f"unexpected migration set: {sorted(names)}"
 
 
