@@ -158,6 +158,44 @@ The migration adding `VERTICAL` and `ENTITY` to storage is **deferred to
 Brain-V1-B**, where it will be planned and tested with backward compatibility.
 Until then, no code may assume storage accepts `VERTICAL` or `ENTITY`.
 
+**Status — closed by Brain-V1-B, 2026-09-22.**
+`supabase/migrations/20260922_006_brain_scope_vertical_entity_v01.sql` widened
+the `scope_type` CHECK on `n8n_brain.operational_experiences` and
+`n8n_brain.build_runs` from four values to the six the contract defines. The
+paragraph above is left as written: it recorded a real gap, the gap was real for
+the duration of Brain-V1-A, and rewriting it would erase the evidence that the
+contract and storage were once apart.
+
+What the migration did and did not do:
+
+- it **widened**. Two values were added to a CHECK; none was removed, renamed or
+  redefined, and `CLIENT` and `PROJECT` keep exactly their prior meaning;
+- it **read no rows and wrote none**. A widening cannot invalidate a row that
+  already satisfied the narrower constraint;
+- it **refuses to run on a drifted database**. If the pre-migration constraint
+  is not where Brain-V1-A recorded it, the migration raises instead of dropping
+  a constraint it did not expect;
+- it ships **no automatic down-step**. Narrowing again would orphan any row
+  using a new value, and a rollback that deletes rows to make a constraint fit is
+  the failure mode this project exists to prevent. The manual procedure is in the
+  migration header.
+
+Backward compatibility is proven rather than asserted:
+`supabase/tests/brain_scope_legacy_seed.sql` runs *before* the migration,
+captures the constraint actually in force and writes one row under every legacy
+scope; `supabase/tests/brain_scope_vertical_entity_v01.sql` runs after it and
+checks those rows survived unchanged, that every legacy value is still admitted,
+that all six scopes are accepted by real inserts, and that `COMPANY` is not one
+of them.
+
+Parity is now enforced continuously rather than re-audited by hand.
+`packages/brain-retrieval/tests/test_enum_parity.py` — reached through the
+`brain-retrieval-quality` CI job — compares the Python vocabularies, the JSON
+schema enums and the `CHECK` constraints in the migration SQL on every run, for
+`scope_type` and `epistemic_status`. The two layers cannot drift apart again
+without failing the build. `LEGACY_STORAGE_SCOPE_TYPES` stays in `enums.py` as
+history; `STORAGE_SCOPE_TYPES` is what storage accepts now.
+
 ---
 
 ## DIV-4 — epistemic status spelling

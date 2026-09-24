@@ -272,6 +272,24 @@ jobs:
           psql -f supabase/migrations/20260918_003_n8n_brain_writer_postgres_membership_v01.sql
           psql -f supabase/migrations/20260920_004_n8n_brain_experience_and_runs_v01.sql
           psql -f supabase/migrations/20260920_005_fix_touch_build_run_search_path.sql
+      - name: Seed legacy-scoped rows under the pre-migration constraint
+        # Written while the four-value CHECK is still in force, so the next step
+        # has real rows to preserve. Backward compatibility is proven here or
+        # not at all: asserting it after the fact proves nothing.
+        run: psql -f supabase/tests/brain_scope_legacy_seed.sql
+      - name: Apply the Brain V1 scope migration
+        run: psql -f supabase/migrations/20260922_006_brain_scope_vertical_entity_v01.sql
+      - name: Re-apply it, to prove it is idempotent
+        run: psql -f supabase/migrations/20260922_006_brain_scope_vertical_entity_v01.sql
+      - name: Legacy rows survived and all six scopes are accepted
+        run: psql -f supabase/tests/brain_scope_vertical_entity_v01.sql
+      - name: The migration refuses every drifted, missing and mixed state
+        # The happy path above only ever shows the migration agreeing with a
+        # state it produced itself. These cases put the database into states it
+        # must refuse -- including a constraint carrying the expected name and
+        # the wrong definition, which an earlier version accepted and silently
+        # overwrote -- and prove each refusal left storage untouched.
+        run: psql -f supabase/tests/brain_scope_vertical_entity_drift_cases.sql
       - name: Validate security and invariants
         run: |
           psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql
@@ -724,6 +742,104 @@ jobs:
           print('unexpected binding ->', result.required_action)
           "
 
+  brain-retrieval-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/brain-retrieval
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packages/brain-retrieval/pyproject.toml
+      - name: Install the contract, then the package that consumes it
+        # Installed separately and in this order on purpose: it proves the
+        # dependency direction is real and one-way. brain-retrieval consumes
+        # brain-contract; nothing in the contract knows this package exists.
+        run: |
+          python -m pip install -e ../brain-contract
+          python -m pip install -e '.[dev]'
+      - name: Ruff
+        run: ruff check .
+      - name: Tests
+        run: pytest
+      - name: The fixture is reproducible from its generator
+        # Regenerating must be a no-op. A fixture edited by hand would drift from
+        # the script that documents what each object is for, and the evals would
+        # slowly stop testing what they say they test.
+        run: |
+          set -euo pipefail
+          cp fixtures/brain_v1_b.json /tmp/fixture-before.json
+          python fixtures/build_fixture.py
+          diff -u /tmp/fixture-before.json fixtures/brain_v1_b.json
+      - name: Every fixture object validates against the published schemas
+        run: |
+          set -euo pipefail
+          python -c "
+          from vorquel_brain_retrieval import InMemoryBrainStore
+          store = InMemoryBrainStore.from_json('fixtures/brain_v1_b.json')
+          total = sum(len(store.all_of(t)) for t in (
+              'Entity','Source','SourceFragment','Claim','Evidence',
+              'Hypothesis','Unknown','Decision','Event','StateProjection'))
+          assert total > 50, total
+          print(total, 'objects loaded and schema-validated')
+          "
+      - name: Enum parity across Python, schemas and storage
+        working-directory: .
+        run: |
+          set -euo pipefail
+          # The Brain-V1-A scratch audit, made permanent. Compares the Python
+          # vocabularies against the JSON schema enums, and against the CHECK
+          # constraints in the migration SQL for the two columns storage
+          # actually constrains.
+          python -c "
+          from vorquel_brain_retrieval.parity import assert_parity, parity_report
+          import json
+          assert_parity()
+          print(json.dumps(parity_report(), indent=2, sort_keys=True))
+          "
+      - name: The ContextPack is byte-reproducible
+        run: |
+          set -euo pipefail
+          python -c "
+          import json
+          from vorquel_brain_retrieval import InMemoryBrainStore, Scope, get_context_pack
+          store = InMemoryBrainStore.from_json('fixtures/brain_v1_b.json')
+          scope = Scope('ENTITY', 'chaves-hugo')
+          args = dict(mode='AUDIT', token_budget=8000, entity_ids=('ent_chaves_hugo',))
+          first = get_context_pack(store, 'reduzir tempo de resposta', scope, **args).pack
+          second = get_context_pack(store, 'reduzir tempo de resposta', scope, **args).pack
+          assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
+          print('context_pack_id', first['context_pack_id'])
+          "
+      - name: This package implements six reads and neither controlled write
+        run: |
+          set -euo pipefail
+          # The mirror of the Brain-V1-A assertion that it implemented none of
+          # the eight. Brain-V1-B implements the reads and stops there;
+          # record_candidate and record_event are Brain-V1-C.
+          python -c "
+          import vorquel_brain_retrieval as pkg
+          from vorquel_brain_contract import BRAIN_V1_CONTROLLED_WRITES, BRAIN_V1_READS
+          assert set(pkg.IMPLEMENTED_READS) == set(BRAIN_V1_READS), pkg.IMPLEMENTED_READS
+          for write in BRAIN_V1_CONTROLLED_WRITES:
+              assert not hasattr(pkg, write), write
+          assert not hasattr(pkg.BrainStore, 'write')
+          print('6 reads implemented, 0 writes, storage port is read-only')
+          "
+      - name: No MCP server, vector database or graph database was introduced
+        run: |
+          set -euo pipefail
+          # Brain-V1-B's out-of-bounds list, checked rather than promised.
+          # src/ only: tests/ names these strings on purpose, in the test that
+          # asserts the package does not contain them.
+          ! grep -rnE --include='*.py' "mcp\.server|FastMCP|stdio_server|import (chromadb|qdrant|pinecone|neo4j|weaviate|pgvector)" src/
+
+
   brain-contract-quality:
     runs-on: ubuntu-latest
     defaults:
@@ -795,15 +911,23 @@ jobs:
           assert violations and violations[0].severity == 'CRITICAL', violations
           print('absence-as-false ->', violations[0].code)
           "
-      - name: This package ships no migration
+      - name: No unreviewed migration appears
         run: |
           set -euo pipefail
-          # Brain-V1-A is schema-only. The live four-scope constraint stands
-          # until Brain-V1-B plans the migration with backward compatibility.
+          # Brain-V1-A shipped no migration and this step asserted the count was
+          # five. Brain-V1-B added exactly one -- 20260922_006, the migration
+          # DIV-3 deferred to it -- so the expected count is six.
+          #
+          # The gate is unchanged in force: a seventh file still fails here, and
+          # the set is pinned by name in
+          # tests/test_div_reconciliation.py::test_no_unreviewed_migration_appears
+          # so a migration cannot land unreviewed by being renamed into the
+          # count.
           cd "$GITHUB_WORKSPACE"
           count=$(find supabase/migrations -name '*.sql' | wc -l)
-          if [ "$count" -ne 5 ]; then
-            echo "expected 5 migrations, found $count" >&2
+          if [ "$count" -ne 6 ]; then
+            echo "expected 6 migrations, found $count" >&2
+            find supabase/migrations -name '*.sql' | sort >&2
             exit 1
           fi
-          echo "migration count unchanged: $count"
+          echo "migration count as reviewed: $count"

@@ -73,11 +73,14 @@ SCOPE_TYPES: Final[tuple[str, ...]] = (
     "PRIVATE_TEST",
 )
 
-#: What the *live* database actually accepts today, as constrained in
+#: What storage accepted **before** ``20260922_006``, as constrained in
 #: ``supabase/migrations/20260920_004_n8n_brain_experience_and_runs_v01.sql``.
-#: Brain-V1-A performs no migration, so the contract is deliberately ahead of
-#: storage by ``VERTICAL`` and ``ENTITY`` until Brain-V1-B closes the gap.
-#: Nothing may assume storage accepts a scope outside this tuple.
+#: Kept as history rather than deleted: Brain-V1-A shipped with the contract
+#: deliberately two values ahead of storage, and that gap is part of the record
+#: of how this contract was built, not an embarrassment to tidy away.
+#:
+#: This is no longer what the live database accepts — see
+#: :data:`STORAGE_SCOPE_TYPES`.
 LEGACY_STORAGE_SCOPE_TYPES: Final[tuple[str, ...]] = (
     "GLOBAL_VORQUEL",
     "CLIENT",
@@ -85,8 +88,21 @@ LEGACY_STORAGE_SCOPE_TYPES: Final[tuple[str, ...]] = (
     "PRIVATE_TEST",
 )
 
+#: What the live database accepts, since
+#: ``supabase/migrations/20260922_006_brain_scope_vertical_entity_v01.sql``
+#: widened the constraint on ``n8n_brain.operational_experiences`` and
+#: ``n8n_brain.build_runs``. Brain-V1-B closed the DIV-3 gap, so the contract and
+#: storage now agree on all six values.
+#:
+#: Not maintained by hand: ``packages/brain-retrieval`` compares this tuple, the
+#: JSON schema enum and the ``CHECK`` constraint in the migration SQL on every CI
+#: run, so the three cannot drift apart again without failing.
+STORAGE_SCOPE_TYPES: Final[tuple[str, ...]] = SCOPE_TYPES
+
+#: Empty since Brain-V1-B. Retained rather than removed so that anything written
+#: against the gap keeps working and simply finds nothing left to wait for.
 SCOPES_AWAITING_STORAGE_MIGRATION: Final[tuple[str, ...]] = tuple(
-    scope for scope in SCOPE_TYPES if scope not in LEGACY_STORAGE_SCOPE_TYPES
+    scope for scope in SCOPE_TYPES if scope not in STORAGE_SCOPE_TYPES
 )
 
 # --------------------------------------------------------------------------
