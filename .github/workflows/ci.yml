@@ -283,6 +283,13 @@ jobs:
         run: psql -f supabase/migrations/20260922_006_brain_scope_vertical_entity_v01.sql
       - name: Legacy rows survived and all six scopes are accepted
         run: psql -f supabase/tests/brain_scope_vertical_entity_v01.sql
+      - name: The migration refuses every drifted, missing and mixed state
+        # The happy path above only ever shows the migration agreeing with a
+        # state it produced itself. These cases put the database into states it
+        # must refuse -- including a constraint carrying the expected name and
+        # the wrong definition, which an earlier version accepted and silently
+        # overwrote -- and prove each refusal left storage untouched.
+        run: psql -f supabase/tests/brain_scope_vertical_entity_drift_cases.sql
       - name: Validate security and invariants
         run: |
           psql -f supabase/tests/n8n_brain_knowledge_store_v01.sql
